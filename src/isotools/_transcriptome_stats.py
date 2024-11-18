@@ -408,11 +408,13 @@ def altsplice_stats(self, groups=None, weight_by_coverage=True, min_coverage=2, 
     return df, {'ylabel': ylab, 'title': title}
 
 
-def _check_customised_groups(transcriptome: 'Transcriptome', samples, groups, sample_idx=False):
+def _check_customised_groups(transcriptome: 'Transcriptome', samples=None, groups=None, sample_idx=False):
     '''
     Check if the samples and all the samples in groups are consistent, and all found in transcriptome.samples.
     Customised group names not in transcriptome.groups() are allowed.
 
+    :param samples: A list of sample names to specify the samples to be considered. If omitted, all samples in transcriptome.samples are selected.
+    :param groups: A dict {group_name:[sample_name_list]} or a list of group names to tell how to group samples. If omitted, all the samples are considered as one group.
     :param sample_idx: If True, the samples are specified by sample indices. If False, the samples are specified by sample names.
     :return: A dict {group_name:[sample_list]} with sample names or indices.
     '''
@@ -460,7 +462,7 @@ def entropy_calculation(self: 'Transcriptome', samples=None, groups=None, min_to
     for gene, transcript_ids, _ in self.iter_transcripts(genewise=True, **kwargs):
         gene_entropy = [gene.id, gene.name]
 
-        for _, sample_ids in group_idxs.items():
+        for sample_ids in group_idxs.values():
             cov = gene.coverage[np.ix_(sample_ids, transcript_ids)]
             if cov.sum() < min_total:
                 gene_entropy += [np.nan, np.nan]
