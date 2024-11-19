@@ -462,7 +462,7 @@ def triangle_plot(str_var_tab, ax=None, colors=None, tax_title=None):
     # Set Axis labels and Title
     tax.left_axis_label("TSS", fontsize=10, offset=0.12)
     tax.right_axis_label("splicing ratio", fontsize=10, offset=0.12)
-    tax.bottom_axis_label("PAS", fontsize=10, offset=0.12)
+    tax.bottom_axis_label("PAS", fontsize=10, offset=0.04)
     if tax_title:
         tax.set_title(tax_title, fontsize=14, pad=30)
 
@@ -471,9 +471,9 @@ def triangle_plot(str_var_tab, ax=None, colors=None, tax_title=None):
 
     # Label different areas
     tax.horizontal_line(0.5, linewidth=3, color='pink', linestyle="-.")
-    tax.top_corner_label("splicing high", color='pink', fontsize=12, offset=0.2, weight='bold')
+    tax.top_corner_label("splicing high", color='pink', fontsize=12, offset=0.18, weight='bold')
     tax.left_parallel_line(0.5, linewidth=3, color='gold', linestyle="-.")
-    tax.right_corner_label("PAS high", color='gold', fontsize=12, offset=0.2, weight='bold')
+    tax.right_corner_label("PAS high", position=(1.0, 0.05, 0), color='gold', fontsize=12, weight='bold')
     tax.right_parallel_line(0.5, linewidth=3, color='lightblue', linestyle="-.")
     tax.left_corner_label("TSS high", color='lightblue', fontsize=12, offset=0.2, weight='bold')
 
