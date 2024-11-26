@@ -426,7 +426,6 @@ def triangle_plot(str_var_tab, ax=None, colors=None, tax_title=None):
                    If a dict, the keys should be the group names, consistent with the prefix of columns in str_var_tab, and the values should be the colors.
     '''
 
-    # check the input
     coords = str_var_tab.filter(regex='_(tss|ec|pas)')
     assert all(coords.columns.str.contains('_')), 'name the columns as "group_feature", eg: wt_tss, wt_ec, wt_pas'
     
@@ -455,35 +454,32 @@ def triangle_plot(str_var_tab, ax=None, colors=None, tax_title=None):
         vals = coords.loc[:, coords.columns.str.startswith(gn)]
         tax.scatter(vals.to_numpy()[:, [2, 1, 0]], color=color_scheme[gn], alpha=.5, label=gn)
 
-    # Draw Boundary and Gridlines
     tax.boundary(linewidth=1.5)
     tax.gridlines(multiple=0.25, linewidth=0.5)
 
-    # Set Axis labels and Title
-    tax.left_axis_label("TSS", fontsize=10, offset=0.12)
-    tax.right_axis_label("splicing ratio", fontsize=10, offset=0.12)
-    tax.bottom_axis_label("PAS", fontsize=10, offset=0.04)
+    tax.left_axis_label("TSS", fontsize=12, offset=0.12, weight='bold')
+    tax.right_axis_label("splicing ratio", fontsize=12, offset=0.12, weight='bold')
+    tax.bottom_axis_label("PAS", fontsize=12, offset=0.04, weight='bold')
     if tax_title:
         tax.set_title(tax_title, fontsize=14, pad=30)
 
-    # Set ticks
     tax.ticks(axis='lbr', linewidth=1, multiple=0.25, offset=0.02, tick_formats="%.2f")
 
-    # Label different areas
-    tax.horizontal_line(0.5, linewidth=3, color='pink', linestyle="-.")
-    tax.top_corner_label("splicing high", color='pink', fontsize=12, offset=0.18, weight='bold')
-    tax.left_parallel_line(0.5, linewidth=3, color='gold', linestyle="-.")
-    tax.right_corner_label("PAS high", position=(1.0, 0.05, 0), color='gold', fontsize=12, weight='bold')
-    tax.right_parallel_line(0.5, linewidth=3, color='lightblue', linestyle="-.")
-    tax.left_corner_label("TSS high", color='lightblue', fontsize=12, offset=0.2, weight='bold')
+    # label different areas
+    tax.horizontal_line(0.5, linewidth=3, color='palevioletred', linestyle="-.")
+    tax.top_corner_label("splicing high", color='palevioletred', fontsize=12, offset=0.18, weight='bold')
+    tax.left_parallel_line(0.5, linewidth=3, color='olivedrab', linestyle="-.")
+    tax.right_corner_label("PAS high", position=(1.0, 0.05, 0), color='olivedrab', fontsize=12, weight='bold')
+    tax.right_parallel_line(0.5, linewidth=3, color='cornflowerblue', linestyle="-.")
+    tax.left_corner_label("TSS high", color='cornflowerblue', fontsize=12, offset=0.2, weight='bold')
+    tax.scatter([[1/3, 1/3, 1/3]], marker='*', color='saddlebrown', s=120) # simple
 
-    # Background color
-    tax.set_background_color(color="whitesmoke", alpha=0.7) # the detault, essentially
+    tax.set_background_color(color="whitesmoke", alpha=0.7)
     
     if isinstance(colors, dict):
         tax.legend(title=None, fontsize=10, facecolor='white', frameon=True)
 
-    # Remove default Matplotlib Axes
+    # remove default matplotlib axes
     tax.clear_matplotlib_ticks()
     tax.get_axes().axis('off')
 
