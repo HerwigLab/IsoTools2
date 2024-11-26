@@ -224,7 +224,7 @@ def add_annotation_domains(self, annotation, category, id_col='uniProtId', name_
     domain_count = 0
     # clear domains of that category
     if isinstance(annotation, str):
-        anno = pd.read_csv(annotation, sep='\t')
+        anno = pd.read_csv(annotation, sep='\t', low_memory=False)
     elif isinstance(annotation, pd.DataFrame):
         anno = annotation
     else:
