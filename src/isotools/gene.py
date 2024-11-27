@@ -792,7 +792,10 @@ class Gene(Interval):
             return list(range(len(self.ref_transcripts)))
         transcript_ids = []
         for i, transcript in enumerate(self.ref_transcripts):
-            if query_fun(**{tag: f(gene=self, transcript_id=i, **transcript) for tag, f in transcript_filter_func.items()}):
+            filter_transcript = transcript.copy()
+            if 'transcript_id' in filter_transcript:
+                filter_transcript['ref_transcript_id'] = filter_transcript.pop('transcript_id')
+            if query_fun(**{tag: f(gene=self, transcript_id=i, **filter_transcript) for tag, f in transcript_filter_func.items()}):
                 transcript_ids.append(i)
         return transcript_ids
 

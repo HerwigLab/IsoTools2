@@ -232,7 +232,7 @@ class Transcriptome:
         '''The list of chromosome names.'''
         return list(self.data)
 
-    def _add_novel_gene(self, chrom, start, end, strand, info, novel_prefix='PB_novel_'):
+    def _add_novel_gene(self, chrom, start, end, strand, info, novel_prefix='IT_novel_'):
         n_novel = self.novel_genes
         info.update({'chr': chrom, 'ID': f'{novel_prefix}{n_novel+1:05d}', 'strand': strand})
         g = Gene(start, end, info, self)
@@ -259,10 +259,11 @@ class Transcriptome:
         transcript_table,
         chimeric_table,
         write_gtf,
+        write_fasta,
         export_alternative_splicing,
         import_sqanti_classification,
     )
-
+    
     # filtering functionality and iterators
     from ._transcriptome_filter import add_qc_metrics, add_orf_prediction, add_filter, remove_filter, iter_genes, iter_transcripts, iter_ref_transcripts
 
@@ -271,7 +272,8 @@ class Transcriptome:
 
     # statistic: summary tables (can be used as input to plot_bar / plot_dist)
     from ._transcriptome_stats import altsplice_stats, filter_stats, transcript_length_hist, transcript_coverage_hist, \
-        transcripts_per_gene_hist, exons_per_transcript_hist, downstream_a_hist, direct_repeat_hist
-
+        transcripts_per_gene_hist, exons_per_transcript_hist, downstream_a_hist, direct_repeat_hist, \
+        entropy_calculation, str_var_calculation
+    
     # protein domain annotation
     from .domains import add_hmmer_domains, add_annotation_domains

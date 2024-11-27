@@ -3,18 +3,18 @@ from scipy.special import gammaln, polygamma  # pylint: disable-msg=E0611
 from scipy.optimize import minimize, minimize_scalar
 import statsmodels.stats.multitest as multi
 import logging
+import math
 import numpy as np
 import pandas as pd
 import itertools
 from typing import Literal, Optional, TYPE_CHECKING
-from ._utils import ASEType
 
 if TYPE_CHECKING:
     from .transcriptome import Transcriptome
 
 # from .decorators import deprecated, debug, experimental
-from ._utils import _filter_function
 from .splice_graph import SegmentGraph
+from ._utils import _filter_function, ASEType, str_var_triplet
 
 logger = logging.getLogger('isotools')
 
@@ -406,7 +406,120 @@ def altsplice_stats(self: 'Transcriptome', groups=None, weight_by_coverage=True,
             title += f' > {min_coverage} reads'
 
     return df, {'ylabel': ylab, 'title': title}
-    #
+
+
+def _check_customised_groups(transcriptome: 'Transcriptome', samples=None, groups=None, sample_idx=False):
+    '''
+    Check if the samples and all the samples in groups are consistent, and all found in transcriptome.samples.
+    Customised group names not in transcriptome.groups() are allowed.
+
+    :param samples: A list of sample names to specify the samples to be considered. If omitted, all samples in transcriptome.samples are selected.
+    :param groups: A dict {group_name:[sample_name_list]} or a list of group names to tell how to group samples. If omitted, all the samples are considered as one group.
+    :param sample_idx: If True, the samples are specified by sample indices. If False, the samples are specified by sample names.
+    :return: A dict {group_name:[sample_list]} with sample names or indices.
+    '''
+
+    if samples is None:
+        samples = transcriptome.samples
+    else:
+        assert all(s in transcriptome.samples for s in samples), 'not all specified samples found'
+        if isinstance(groups, dict):
+            assert list(set(sum(groups.values(), []))) == list(set(samples)), 'inconsistent samples specified in samples and in groups'
+
+    if groups is None:
+        group_dict = {'all' if len(samples) == len(transcriptome.samples) else 'selected': samples}
+    elif isinstance(groups, dict):
+        assert all(s in samples for s in sum(groups.values(), [])), 'not all the samples in specified groups are found'
+        group_dict = groups
+    elif isinstance(groups, list):
+        assert all(gn in transcriptome.groups() for gn in groups), 'not all specified groups are found. To customize groups, use a dict {group_name:[sample_name_list]}'
+        group_dict = {gn: [s for s in transcriptome.groups()[gn] if s in samples] for gn in groups if any(s in samples for s in transcriptome.groups()[gn])}
+    else:
+        raise ValueError('groups must be a dict or a list of group names')
+
+    if sample_idx:
+        group_dict = {gn:[transcriptome.samples.index(s) for s in sample_names] for gn, sample_names in group_dict.items()}
+    
+    return group_dict
+
+
+def entropy_calculation(self: 'Transcriptome', samples=None, groups=None, min_total=1, relative=True, **kwargs):
+    '''
+    Calculates the entropy of genes based on the coverage of selected transcripts.
+
+    :param samples: A list of sample names to specify the samples to be considered. If omitted, all samples are selected.
+    :param groups: Entropy calculation done by groups of samples. A dict {group_name:[sample_name_list]} or a list of group names. If omitted, all the samples are considered as one group.
+    :param min_total: Minimum total coverage of a gene over all the samples in a selected group.
+    :param relative: If True, the entropy is normalized by log2 of the number of selected transcripts in the group.
+    :param kwargs: Additional keyword arguments are passed to iter_transcripts.
+    :return: A table of (relative) entropy of genes based on the coverage of selected transcripts.
+    '''
+
+    group_idxs = _check_customised_groups(self, samples, groups, sample_idx=True)
+
+    entropy_tab = pd.DataFrame(columns=['gene_id', 'gene_name'] + [f'{g}_{c}' for g, c in itertools.product(group_idxs, ['ntr', 'rel_entropy' if relative else 'entropy'])])
+
+    for gene, transcript_ids, _ in self.iter_transcripts(genewise=True, **kwargs):
+        gene_entropy = [gene.id, gene.name]
+
+        for sample_ids in group_idxs.values():
+            cov = gene.coverage[np.ix_(sample_ids, transcript_ids)]
+            if cov.sum() < min_total:
+                gene_entropy += [np.nan, np.nan]
+            else:
+                transcript_number = sum(cov.sum(0) > 0)
+                group_entropy = -sum(math.log2(p) * p for p in cov.sum(0)[cov.sum(0) > 0] / cov.sum())
+                if relative:
+                    group_entropy = (group_entropy / math.log2(transcript_number)) if transcript_number > 1 else np.nan
+                gene_entropy += [transcript_number, group_entropy]
+        
+        entropy_tab = pd.concat([entropy_tab, pd.DataFrame([gene_entropy], columns=entropy_tab.columns)], ignore_index=True)
+    
+    # exclude rows with all empty or NA entries in entropy columns
+    entropy_tab.dropna(subset=entropy_tab.columns[2:], how='all', inplace=True)
+
+    return entropy_tab
+
+
+def str_var_calculation(self: 'Transcriptome', samples=None, groups=None, strict_ec=0, strict_pos=15, count_number=False, **kwargs):
+    '''
+    Quantify the structural variation of genes based on selected transcripts.
+    Structural variation includes (and in the same order of) distinct TSS positions, exon chains, and PAS positions.
+    
+    :param samples: A list of sample names to specify the samples to be considered. If omitted, all samples are selected.
+    :param groups: Quantification done by groups of samples. A dict {group_name:[sample_name_list]} or a list of group names. If omitted, all the samples are considered as one group.
+    :param strict_ec: Distance allowed between each position, except for the first/last, in two exon chains so that they can be considered as identical.
+    :param strict_pos: Difference allowed between two positions when considering identical TSS/PAS.
+    :param count_number: By default False. If True, the number of distinct TSSs, exon chains and PASs in genes directly.
+    :param kwargs: Additional keyword arguments are passed to iter_transcripts.
+    :return: A table of structural variation of genes based on selected transcripts, including: gene_id, gene_name, and the variation of TSS, exon chain, and PAS for each group of samples.
+    '''
+
+    group_sns = _check_customised_groups(self, samples, groups, sample_idx=False)
+
+    str_var_tab = pd.DataFrame(columns=['gene_id', 'gene_name'] + [f'{g}_{c}' for g, c in itertools.product(group_sns, ['tss', 'ec', 'pas'])])
+
+    for gene, _, selected_trs in self.iter_transcripts(genewise=True, **kwargs):
+        gene_str_var = [gene.id, gene.name]
+
+        for _, selected_samples in group_sns.items():
+            group_var = str_var_triplet(transcripts=selected_trs, samples=selected_samples, strict_ec=strict_ec, strict_pos=strict_pos)
+
+            if not count_number:
+                # regress out the variation caused by TAS and PAS for exon chain
+                splicing_ratio = 2 * group_var[1] / (group_var[0] + group_var[2]) if (group_var[0] > 0 and group_var[2] > 0) else 0
+                ratio_triplet = [group_var[0], splicing_ratio, group_var[2]]
+                # normalize to the sum of 1
+                group_var = [n / sum(ratio_triplet) for n in ratio_triplet] if sum(ratio_triplet) > 0 else [0, 0, 0]
+            gene_str_var += group_var
+        
+        str_var_tab = pd.concat([str_var_tab, pd.DataFrame([gene_str_var], columns=str_var_tab.columns)], ignore_index=True)
+
+    # replace 0 with nan, and remove rows with all nan
+    str_var_tab = str_var_tab.replace(0, np.nan)
+    str_var_tab = str_var_tab.dropna(how='all', subset=str_var_tab.columns[2:])
+
+    return str_var_tab
 
 
 def filter_stats(self: 'Transcriptome', tags=None, groups=None, weight_by_coverage=True, min_coverage=2, **kwargs):
