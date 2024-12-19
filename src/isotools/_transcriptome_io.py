@@ -418,14 +418,14 @@ def add_sample_from_bam(self: Transcriptome, fn, sample_name=None, barcode_file=
                             transcript.setdefault('range', {}).setdefault(transcript_range, 0)
                             transcript['range'][transcript_range] += cov
                             if save_readnames:
-                                transcript['reads'].append(read.query_name)
+                                transcript['reads'].setdefault(s_name, []).append(read.query_name)
                             break
                     else:
                         transcript = {'exons': exons, 'range': {transcript_range: cov}, 'strand': strand}
                         if barcodes:
                             transcript['bc_group'] = barcodes[tags['XC']]
                         if save_readnames:
-                            transcript['reads'] = [read.query_name]
+                            transcript['reads'] = {s_name: [read.query_name]}
                         transcript_intervals.add(Interval(*transcript_range, transcript))
                     # if genome_fh is not None:
                     #    mutations=get_mutations(read.cigartuples, read.query_sequence, genome_fh, chrom,read.reference_start,read.query_qualities)
@@ -806,7 +806,7 @@ def _combine_transcripts(established: Transcript, new_transcript: Transcript):
         for sample_name in new_transcript['coverage']:
             established['coverage'][sample_name] = established['coverage'].get(sample_name, 0) + new_transcript['coverage'][sample_name]
         for sample_name in new_transcript.get('reads', {}):
-            established['reads'].setdefault(sample_name, []).extend(new_transcript['reads'])
+            established['reads'].setdefault(sample_name, []).extend(new_transcript['reads'][sample_name])
         for side in 'TSS', 'PAS':
             for sample_name in new_transcript[side]:
                 for pos, cov in new_transcript[side][sample_name].items():
@@ -824,9 +824,9 @@ def _combine_transcripts(established: Transcript, new_transcript: Transcript):
             new_introns = set(new_transcript['long_intron_chimeric'])
             established_introns = set(established.get('long_intron_chimeric', set()))
             established['long_intron_chimeric'] = tuple(new_introns.union(established_introns))
-    except BaseException:
-        logger.error('error when merging %s into %s', new_transcript, established)
-        raise
+    except BaseException as e:
+        logger.error(f'error when merging {new_transcript} into {established}')
+        raise e
 
 
 def _get_novel_type(exons, genes_overlap, genes_overlap_strand):
@@ -1502,7 +1502,7 @@ def write_gtf(self: Transcriptome, fn, source='isotools', gzip=False, **filter_a
 def write_fasta(self: Transcriptome, genome_fn, fn, gzip=False, reference=False, protein=False, **filter_args):
     '''
     Exports the transcript sequences in fasta format to a file.
-    
+
     :param genome_fn: Path to the genome in fastA format.
     :param reference: Specify whether the sequence is fetched for reference transcripts (True), or long read transcripts (False, default).
     :param protein: Return protein sequences (ORF) instead of transcript sequences.
