@@ -50,8 +50,8 @@ class Transcript(TypedDict, total=False):
     clipping: dict[str, dict[str, int]]
     annotation: tuple[int, dict[str, Any]] # TODO: Switch the dict to a TypedDict, Replace novelty with Enum
     "The annotation of the transcript. The first element is the novelty class (0=FSM,1=ISM,2=NIC,3=NNC,4=Novel gene), the second a dictionary with the subcategories."
-    reads: list[str]
-    'TODO: This seems to be inconsistent. Sometimes it is a list of read names, sometimes a dict with sample names as keys and the lists as values.'
+    reads: dict[str, list[str]]
+    'sample names as keys, list of reads as values.'
     novel_splice_sites: list[int]
     TSS_unified: dict[str, dict[int, int]]
     PAS_unified: dict[str, dict[int, int]]
