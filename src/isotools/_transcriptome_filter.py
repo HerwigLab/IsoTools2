@@ -30,11 +30,11 @@ DEFAULT_TRANSCRIPT_FILTER = {
     'FRAGMENT': 'fragments and any("novel exonic " in a or "fragment" in a for a in annotation[1])',
     'UNSPLICED': 'len(exons)==1',
     'MULTIEXON': 'len(exons)>1',
-    'SUBSTANTIAL': 'gene.coverage.sum() * .01 < gene.coverage[:,transcript_id].sum()',
-    'HIGH_COVER': 'gene.coverage.sum(0)[transcript_id] >= 7',
-    'PERMISSIVE': 'gene.coverage.sum(0)[transcript_id] >= 2 and (FSM or not (RTTS or INTERNAL_PRIMING or FRAGMENT))',
-    'BALANCED': 'gene.coverage.sum(0)[transcript_id] >= 2 and (FSM or (HIGH_COVER and not (RTTS or FRAGMENT or INTERNAL_PRIMING)))',
-    'STRICT': 'gene.coverage.sum(0)[transcript_id] >= 7 and SUBSTANTIAL and (FSM or not (RTTS or FRAGMENT or INTERNAL_PRIMING))',
+    'SUBSTANTIAL': 'gene.coverage.sum() * .01 < gene.coverage[:,trid].sum()',
+    'HIGH_COVER': 'gene.coverage.sum(0)[trid] >= 7',
+    'PERMISSIVE': 'gene.coverage.sum(0)[trid] >= 2 and (FSM or not (RTTS or INTERNAL_PRIMING or FRAGMENT))',
+    'BALANCED': 'gene.coverage.sum(0)[trid] >= 2 and (FSM or (HIGH_COVER and not (RTTS or FRAGMENT or INTERNAL_PRIMING)))',
+    'STRICT': 'gene.coverage.sum(0)[trid] >= 7 and SUBSTANTIAL and (FSM or not (RTTS or FRAGMENT or INTERNAL_PRIMING))',
     'CAGE_SUPPORT': 'sqanti_classification is not None and sqanti_classification["within_CAGE_peak"]',
     'TSS_RATIO': 'sqanti_classification is not None and sqanti_classification["ratio_TSS"] > 1.5',
     'POLYA_MOTIF': 'sqanti_classification is not None and sqanti_classification["polyA_motif_found"]',
@@ -173,7 +173,7 @@ def add_filter(self, tag, expression, context='transcript', update=False):
     if context == 'gene':
         attributes = {k for gene in self for k in gene.data.keys() if k.isidentifier()}
     else:
-        attributes = {'gene', 'transcript_id'}
+        attributes = {'gene', 'trid'}
         if context == 'transcript':
             attributes.update({k for gene in self for transcript in gene.transcripts for k in transcript.keys() if k.isidentifier()})
         elif context == 'reference':
@@ -377,9 +377,7 @@ def _filter_transcripts(gene: 'Gene', transcripts, query_fun, filter_fun, g_filt
         if maxcoverage and gene.coverage[:, i].sum() > maxcoverage:
             continue
         filter_transcript = transcript.copy()
-        if 'transcript_id' in filter_transcript:
-            filter_transcript['ref_transcript_id'] = filter_transcript.pop('transcript_id')
         query_result = query_fun is None or query_fun(
-            **g_filter_eval, **{tag: _eval_filter_fun(f, tag, gene=gene, transcript_id=i, **filter_transcript) for tag, f in filter_fun.items()})
+            **g_filter_eval, **{tag: _eval_filter_fun(f, tag, gene=gene, trid=i, **filter_transcript) for tag, f in filter_fun.items()})
         if query_result:
             yield i, transcript
