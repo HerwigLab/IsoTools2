@@ -775,7 +775,7 @@ class Gene(Interval):
             if max_coverage and self.coverage[:, i].sum() > max_coverage:
                 continue
             if query is None or query_fun(
-                    **{tag: f(gene=self, transcript_id=i, **transcript) for tag, f in transcript_filter_fun.items()}):
+                    **{tag: f(gene=self, trid=i, **transcript) for tag, f in transcript_filter_fun.items()}):
                 transcript_ids.append(i)
         return transcript_ids
 
@@ -793,9 +793,7 @@ class Gene(Interval):
         transcript_ids = []
         for i, transcript in enumerate(self.ref_transcripts):
             filter_transcript = transcript.copy()
-            if 'transcript_id' in filter_transcript:
-                filter_transcript['ref_transcript_id'] = filter_transcript.pop('transcript_id')
-            if query_fun(**{tag: f(gene=self, transcript_id=i, **filter_transcript) for tag, f in transcript_filter_func.items()}):
+            if query_fun(**{tag: f(gene=self, trid=i, **filter_transcript) for tag, f in transcript_filter_func.items()}):
                 transcript_ids.append(i)
         return transcript_ids
 

@@ -439,7 +439,7 @@ def _check_customised_groups(transcriptome: 'Transcriptome', samples=None, group
 
     if sample_idx:
         group_dict = {gn:[transcriptome.samples.index(s) for s in sample_names] for gn, sample_names in group_dict.items()}
-    
+
     return group_dict
 
 
@@ -472,9 +472,9 @@ def entropy_calculation(self: 'Transcriptome', samples=None, groups=None, min_to
                 if relative:
                     group_entropy = (group_entropy / math.log2(transcript_number)) if transcript_number > 1 else np.nan
                 gene_entropy += [transcript_number, group_entropy]
-        
+
         entropy_tab = pd.concat([entropy_tab, pd.DataFrame([gene_entropy], columns=entropy_tab.columns)], ignore_index=True)
-    
+
     # exclude rows with all empty or NA entries in entropy columns
     entropy_tab.dropna(subset=entropy_tab.columns[2:], how='all', inplace=True)
 
@@ -485,7 +485,7 @@ def str_var_calculation(self: 'Transcriptome', samples=None, groups=None, strict
     '''
     Quantify the structural variation of genes based on selected transcripts.
     Structural variation includes (and in the same order of) distinct TSS positions, exon chains, and PAS positions.
-    
+
     :param samples: A list of sample names to specify the samples to be considered. If omitted, all samples are selected.
     :param groups: Quantification done by groups of samples. A dict {group_name:[sample_name_list]} or a list of group names. If omitted, all the samples are considered as one group.
     :param strict_ec: Distance allowed between each position, except for the first/last, in two exon chains so that they can be considered as identical.
@@ -512,7 +512,7 @@ def str_var_calculation(self: 'Transcriptome', samples=None, groups=None, strict
                 # normalize to the sum of 1
                 group_var = [n / sum(ratio_triplet) for n in ratio_triplet] if sum(ratio_triplet) > 0 else [0, 0, 0]
             gene_str_var += group_var
-        
+
         str_var_tab = pd.concat([str_var_tab, pd.DataFrame([gene_str_var], columns=str_var_tab.columns)], ignore_index=True)
 
     # replace 0 with nan, and remove rows with all nan
@@ -552,7 +552,7 @@ def filter_stats(self: 'Transcriptome', tags=None, groups=None, weight_by_covera
             if not weight_by_coverage:
                 weight[weight > 0] = 1
         # relevant_filter=[filter for filter in transcript['filter'] if  consider is None or filter in consider]
-        relevant_filter = [tag for tag in tags if filterfun[tag](gene=gene, transcript_id=transcript_id, **transcript)]
+        relevant_filter = [tag for tag in tags if filterfun[tag](gene=gene, trid=transcript_id, **transcript)]
         for filter in relevant_filter:
             weights[filter] = weights.get(filter, np.zeros(weight.shape[0])) + weight[:, transcript_id]
         if not relevant_filter:
