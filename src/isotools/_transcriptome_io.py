@@ -1351,7 +1351,7 @@ def transcript_table(self: Transcriptome, samples=None, groups=None, coverage=Fa
     :param tpm: If set, expression information (in tpm) is added for specified samples / groups.
     :param tpm_pseudocount: This value is added to the coverage for each transcript, before calculating tpm.
     :param extra_columns: Specify the additional information added to the table.
-        These can be any transcrit property as defined by the key in the transcript dict.
+        These can be any transcript property as defined by the key in the transcript dict.
     :param filter_args: Parameters (e.g. "region", "query", "min_coverage",...) are passed to Transcriptome.iter_transcripts.'''
 
     if samples is None:
