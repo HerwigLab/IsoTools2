@@ -1108,7 +1108,7 @@ class Gene(Interval):
                     ref_exon_ends = [exon[1] for transcript in self.ref_transcripts for exon in transcript["exons"] if exon[1] <= tss and exon[1] >= new_tss]
                     # Don't extend past exon ends
                     if not ref_exon_ends:
-                        logger.debug(f'Corrected TSS ({transcript['strand']} strand) from {tss} to {new_tss}')
+                        logger.debug(f'Corrected TSS ({transcript["strand"]} strand) from {tss} to {new_tss}')
                         transcript['exons'][0][0] = new_tss
             else:
                 tss = transcript['exons'][-1][1]
@@ -1117,7 +1117,7 @@ class Gene(Interval):
                     new_tss = min(ref_tsss)
                     ref_exon_ends = [exon[0] for transcript in self.ref_transcripts for exon in transcript["exons"] if exon[0] >= tss and exon[0] <= new_tss]
                     if not ref_exon_ends:
-                        logger.debug(f'Corrected TSS ({transcript['strand']} strand) from {tss} to {new_tss}')
+                        logger.debug(f'Corrected TSS ({transcript["strand"]} strand) from {tss} to {new_tss}')
                         transcript['exons'][-1][1] = new_tss
 
 

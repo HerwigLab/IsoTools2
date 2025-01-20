@@ -29,7 +29,7 @@ python3 -m pip install isotools
 Alternatively, to install from github, use the following command:
 
 ```
-git clone https://github.com/MatthiasLienhard/isotools.git
+git clone https://github.com/HerwigLab/IsoTools2.git
 cd isotools
 python3 -m pip install .
 ```
