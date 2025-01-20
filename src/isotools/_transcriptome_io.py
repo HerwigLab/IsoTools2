@@ -92,7 +92,7 @@ def remove_samples(self: Transcriptome, sample_names):
 
 
 def add_sample_from_csv(self: Transcriptome, coverage_csv_file, transcripts_file, transcript_id_col=None, sample_cov_cols=None,
-                        sample_properties=None, add_chromosomes=True, reconstruct_genes=True, fuzzy_junction=0,
+                        sample_properties=None, add_chromosomes=True, infer_genes=False, reconstruct_genes=True, fuzzy_junction=0,
                         min_exonic_ref_coverage=.25, sep='\t'):
     '''Imports expressed transcripts from coverage table and gtf/gff file, and adds it to the 'Transcriptome' object.
 
@@ -115,6 +115,7 @@ def add_sample_from_csv(self: Transcriptome, coverage_csv_file, transcripts_file
         Can be provided either as a dict with sample names as keys, and the respective properties dicts as the values,
         or as a data frame with a column "name" or with the sample names in the index, and the properties in the additional columns.
     :param add_chromosomes: If True, genes from chromosomes which are not in the Transcriptome yet are added.
+    :param infer_genes: If True, gene structure is inferred from the transcripts. Useful for gtf files without gene information.
     :param reconstruct_genes: If True, transcript gene assignment from gtf is ignored, and transcripts are grouped to genes from scratch.
     :param min_exonic_ref_coverage: Minimal fraction of exonic overlap to assign to reference transcript if no splice junctions match.
         Also applies to mono-exonic transcripts
@@ -175,9 +176,9 @@ def add_sample_from_csv(self: Transcriptome, coverage_csv_file, transcripts_file
     if file_format == 'gz':
         file_format = path.splitext(transcripts_file[:-3])[1].lstrip('.')
     if file_format == 'gtf':
-        exons, transcripts, gene_infos, cds_start, cds_stop, skipped = _read_gtf_file(transcripts_file, chromosomes=chromosomes)
+        exons, transcripts, gene_infos, cds_start, cds_stop, skipped = _read_gtf_file(transcripts_file, chromosomes=chromosomes, infer_genes=infer_genes)
     elif file_format in ('gff', 'gff3'):  # gff/gff3
-        exons, transcripts, gene_infos, cds_start, cds_stop, skipped = _read_gff_file(transcripts_file, chromosomes=chromosomes)
+        exons, transcripts, gene_infos, cds_start, cds_stop, skipped = _read_gff_file(transcripts_file, chromosomes=chromosomes, infer_genes=infer_genes)
     else:
         logger.warning('unknown file format %s of the transcriptome file', file_format)
 
@@ -218,8 +219,8 @@ def add_sample_from_csv(self: Transcriptome, coverage_csv_file, transcripts_file
             used_transcripts.add(row.transcript_id)
         except KeyError as e:
             logger.warning('skipping transcript %s from gene %s, missing infos in gtf: %s', row.transcript_id, row.gene_id, e.args[0])
-        except AssertionError:
-            logger.warning('skipping transcript %s from gene %s: duplicate transcript id', row.transcript_id, row.gene_id)
+        except AssertionError as e:
+            logger.warning('skipping transcript %s from gene %s: duplicate transcript id; Error: %s', row.transcript_id, row.gene_id, e)
     id_map = {}
     novel_prefix = 'IT_novel_'
     if reconstruct_genes:
@@ -972,7 +973,6 @@ def _read_gtf_file(file_name, chromosomes, infer_genes=False, progress_bar=True)
     transcripts = dict()  # gene_id -> transcripts
     skipped = set()
     gene_infos = dict()  # 4 tuple: info_dict, gene_start, gene_end, fixed_flag==True if start/end are fixed
-    inferred_genes = dict()
     cds_start = dict()
     cds_stop = dict()
     # with tqdm(total=path.getsize(file_name), unit_scale=True, unit='B', unit_divisor=1024, disable=not progress_bar) as pbar, TabixFile(file_name) as gtf:
@@ -987,9 +987,10 @@ def _read_gtf_file(file_name, chromosomes, infer_genes=False, progress_bar=True)
             if line[0] == '#':  # ignore header lines
                 continue
             ls = line.split(sep="\t")
+            chr = ls[0]
             assert len(ls) == 9, 'unexpected number of fields in gtf line:\n%s' % line
-            if chromosomes is not None and ls[0] not in chromosomes:
-                logger.debug('skipping line from chr '+ls[0])
+            if chromosomes is not None and chr not in chromosomes:
+                logger.debug('skipping line from chr ' + chr)
                 continue
             try:
                 info = dict([pair.lstrip().split(maxsplit=1) for pair in ls[8].strip().replace('"', '').split(";") if pair])
@@ -998,6 +999,7 @@ def _read_gtf_file(file_name, chromosomes, infer_genes=False, progress_bar=True)
                 raise
             start, end = [int(i) for i in ls[3:5]]
             start -= 1  # to make 0 based
+            gene_infos.setdefault(chr, {})
             if ls[2] == "exon":
                 # logger.debug(line)
                 try:
@@ -1006,19 +1008,18 @@ def _read_gtf_file(file_name, chromosomes, infer_genes=False, progress_bar=True)
                     logger.error("gtf format error: exon without transcript_id\n%s", line)
                     raise
                 if infer_genes and 'gene_id' in info:
-                    inferred_genes.setdefault(ls[0], {})
-                    if info['gene_id'] not in gene_infos[ls[0]]:  # new gene
+                    if info['gene_id'] not in gene_infos[chr]:  # new gene
                         info['strand'] = ls[6]
-                        info['chr'] = ls[0]
+                        info['chr'] = chr
                         _set_alias(info, {'ID': ['gene_id']})
                         _set_alias(info, {'name': ['gene_name', 'Name']}, required=False)
                         ref_info = {k: v for k, v in info.items() if k not in Gene.required_infos + ['name']}
                         info = {k: info[k] for k in Gene.required_infos + ['name'] if k in info}
                         info['properties'] = ref_info
-                        inferred_genes[ls[0]][info['ID']] = (info, start, end)  # start/end not fixed yet (initially set to exon start end)
+                        gene_infos[chr][info['ID']] = (info, start, end)  # start/end not fixed yet (initially set to exon start end)
                     else:
-                        known_info = inferred_genes[ls[0]][info['gene_id']]
-                        gene_infos[info['gene_id']] = (known_info[0], min(known_info[1], start), max(known_info[2], end))
+                        known_info = gene_infos[chr][info['gene_id']]
+                        gene_infos[chr][info['gene_id']] = (known_info[0], min(known_info[1], start), max(known_info[2], end))
                         if 'transcript_id' in info and info['transcript_id'] not in transcripts.setdefault(info['gene_id'], {}):
                             # new transcript
                             tr_info = {k: v for k, v in info.items() if 'transcript' in k and k != 'transcript_id'}
@@ -1029,13 +1030,13 @@ def _read_gtf_file(file_name, chromosomes, infer_genes=False, progress_bar=True)
                     logger.warning("gtf format error: gene without gene_id. Skipping line\n%s", line)
                 else:  # overrule potential entries from exon line
                     info['strand'] = ls[6]
-                    info['chr'] = ls[0]
+                    info['chr'] = chr
                     _set_alias(info, {'ID': ['gene_id']})
                     _set_alias(info, {'name': ['gene_name', 'Name']}, required=False)
                     ref_info = {k: v for k, v in info.items() if k not in Gene.required_infos + ['name']}
                     info = {k: info[k] for k in Gene.required_infos + ['name'] if k in info}
                     info['properties'] = ref_info
-                    gene_infos.setdefault(ls[0], {})[info['ID']] = (info, start, end)
+                    gene_infos[chr][info['ID']] = (info, start, end)
             elif ls[2] == 'transcript':  # overrule potential entries from exon line
                 try:
                     # keep only transcript related infos (to avoid redundant gene infos)
@@ -1350,7 +1351,7 @@ def transcript_table(self: Transcriptome, samples=None, groups=None, coverage=Fa
     :param tpm: If set, expression information (in tpm) is added for specified samples / groups.
     :param tpm_pseudocount: This value is added to the coverage for each transcript, before calculating tpm.
     :param extra_columns: Specify the additional information added to the table.
-        These can be any transcrit property as defined by the key in the transcript dict.
+        These can be any transcript property as defined by the key in the transcript dict.
     :param filter_args: Parameters (e.g. "region", "query", "min_coverage",...) are passed to Transcriptome.iter_transcripts.'''
 
     if samples is None:
