@@ -5,7 +5,7 @@ import pandas as pd
 from os import path
 from intervaltree import IntervalTree, Interval
 from collections.abc import Iterable
-from collections import Counter
+from collections import Counter, defaultdict
 from pysam import TabixFile, AlignmentFile, FastaFile
 from tqdm import tqdm
 from contextlib import ExitStack
@@ -171,6 +171,7 @@ def add_sample_from_csv(self: Transcriptome, coverage_csv_file, transcripts_file
     else:
         chromosomes = self.chromosomes
 
+    logger.info('importing transcripts from %s. Please note transcripts with missing annotations will be skipped.', transcripts_file)
     file_format = path.splitext(transcripts_file)[1].lstrip('.')
     if file_format == 'gz':
         file_format = path.splitext(transcripts_file[:-3])[1].lstrip('.')
@@ -184,6 +185,10 @@ def add_sample_from_csv(self: Transcriptome, coverage_csv_file, transcripts_file
     logger.debug('sorting exon positions...')
     for tid in exons:
         exons[tid].sort()
+
+    logger.info('adding coverage information for transcripts imported.')
+    if skipped:
+        cov_tab = cov_tab[~cov_tab['transcript_id'].isin(skipped['transcript'])]
 
     if 'gene_id' not in cov_tab:
         gene_id_dict = {tid: gid for gid, tids in transcripts.items() for tid in tids}
@@ -245,7 +250,6 @@ def add_sample_from_csv(self: Transcriptome, coverage_csv_file, transcripts_file
                         id_map.setdefault(import_id[0], {})[import_id[1]] = novel_g.id
     else:
         # use gene structure from gtf
-
         for chrom in gene_infos:
             for gid, (g, start, end) in gene_infos[chrom].items():
                 # only transcripts with coverage
@@ -533,7 +537,7 @@ def add_sample_from_bam(self: Transcriptome, fn, sample_name=None, barcode_file=
     return total_nc_reads_chr
 
 
-def _add_chimeric(t: Transcriptome, new_chimeric, min_cov, min_exonic_ref_coverage):
+def _add_chimeric(transcriptome: Transcriptome, new_chimeric, min_cov, min_exonic_ref_coverage):
     ''' add new chimeric transcripts to transcriptome, if covered by > min_cov reads
     '''
     total = {}
@@ -551,7 +555,7 @@ def _add_chimeric(t: Transcriptome, new_chimeric, min_cov, min_exonic_ref_covera
             # should not contain: long intron, one part only (filtered by check_chimeric function),
             # todo: discard invalid (large overlaps, large gaps)
             # find equivalent chimeric reads
-            for found in t.chimeric.setdefault(new_bp, []):
+            for found in transcriptome.chimeric.setdefault(new_bp, []):
                 if all(splice_identical(ch1[2], ch2[2]) for ch1, ch2 in zip(new_chim[1], found[1])):
                     # add coverage
                     for sample in n_reads:
@@ -569,14 +573,14 @@ def _add_chimeric(t: Transcriptome, new_chimeric, min_cov, min_exonic_ref_covera
                         found[1][-1][2][-1][0] = min(found[1][-1][2][-1][0], new_chim[1][-1][2][-1][0])
                     break
             else:  # not seen
-                t.chimeric[new_bp].append(new_chim)
+                transcriptome.chimeric[new_bp].append(new_chim)
                 for part in new_chim[1]:
-                    if part[0] in t.data:
-                        genes_overlap = [gene for gene in t.data[part[0]][part[2][0][0]: part[2][-1][1]] if gene.strand == part[1]]
+                    if part[0] in transcriptome.data:
+                        genes_overlap = [gene for gene in transcriptome.data[part[0]][part[2][0][0]: part[2][-1][1]] if gene.strand == part[1]]
                         gene, _, _ = _find_matching_gene(genes_overlap, part[2], min_exonic_ref_coverage)  # take the best - ignore other hits here
                         if gene is not None:
                             part[4] = gene.name
-                            gene.data.setdefault('chimeric', {})[new_bp] = t.chimeric[new_bp]
+                            gene.data.setdefault('chimeric', {})[new_bp] = transcriptome.chimeric[new_bp]
     return total
 
 
@@ -842,9 +846,9 @@ def _get_novel_type(exons, genes_overlap, genes_overlap_strand):
         return {'intergenic': []}
 
 
-def _add_novel_genes(t: Transcriptome, novel, chrom, spj_iou_th=0, reg_iou_th=.5, gene_prefix='IT_novel_'):
+def _add_novel_genes(transcriptome: Transcriptome, novel, chrom, spj_iou_th=0, reg_iou_th=.5, gene_prefix='IT_novel_'):
     '"novel" is a tree of transcript intervals (not Gene objects) ,e.g. from one chromosome, that do not overlap any annotated or unanntoated gene'
-    n_novel = t.novel_genes
+    n_novel = transcriptome.novel_genes
     idx = {id(transcript): i for i, transcript in enumerate(novel)}
     novel_gene_list = []
     merge = list()
@@ -877,7 +881,7 @@ def _add_novel_genes(t: Transcriptome, novel, chrom, spj_iou_th=0, reg_iou_th=.5
         #    transcript['PAS'] = {sample_name: transcript['PAS']}
         #    if 'reads' in transcript:
         #        transcript['reads'] = {sample_name: transcript['reads']}
-        novel_gene_list.append(t._add_novel_gene(chrom, start, end, strand, {'transcripts': trL}, gene_prefix))
+        novel_gene_list.append(transcriptome._add_novel_gene(chrom, start, end, strand, {'transcripts': trL}, gene_prefix))
         logging.debug('merging transcripts of novel gene %s: %s', n_novel, trL)
     return novel_gene_list
 
@@ -970,7 +974,7 @@ def _find_matching_gene(genes_overlap: list[Gene], exons: list[Tuple[int, int]],
 def _read_gtf_file(file_name, chromosomes, infer_genes=False, progress_bar=True):
     exons = dict()  # transcript id -> exons
     transcripts = dict()  # gene_id -> transcripts
-    skipped = set()
+    skipped = defaultdict(set)
     gene_infos = dict()  # 4 tuple: info_dict, gene_start, gene_end, fixed_flag==True if start/end are fixed
     inferred_genes = dict()
     cds_start = dict()
@@ -996,6 +1000,13 @@ def _read_gtf_file(file_name, chromosomes, infer_genes=False, progress_bar=True)
             except ValueError:
                 logger.error('issue with key value pairs from gtf:\n%s', ls[8])
                 raise
+
+            # gtf of transcriptome reconstructed by external tools may include entries without strand, which can't be mapped to the genome, so skip them
+            if ls[6] not in ('+', '-'):
+                logger.warning('skipping line with unknown strand:\n%s', line)
+                skipped[ls[2]].add([i.split(' ')[-1].strip('"') for i in ls[-1].split(sep=';') if f'{ls[2]}_id' in i][0])
+                continue
+
             start, end = [int(i) for i in ls[3:5]]
             start -= 1  # to make 0 based
             if ls[2] == "exon":
@@ -1023,7 +1034,6 @@ def _read_gtf_file(file_name, chromosomes, infer_genes=False, progress_bar=True)
                             # new transcript
                             tr_info = {k: v for k, v in info.items() if 'transcript' in k and k != 'transcript_id'}
                             transcripts[info["gene_id"]][info["transcript_id"]] = tr_info
-
             elif ls[2] == 'gene':
                 if 'gene_id' not in info:
                     logger.warning("gtf format error: gene without gene_id. Skipping line\n%s", line)
@@ -1048,7 +1058,8 @@ def _read_gtf_file(file_name, chromosomes, infer_genes=False, progress_bar=True)
             elif ls[2] == 'stop_codon' and 'transcript_id' in info:
                 cds_stop[info['transcript_id']] = start if ls[6] == '-' else end
             else:
-                skipped.add(ls[2])
+                # this usually happens to reference annotation, eg: UTR, CDS etc.
+                skipped[ls[2]]
 
     return exons, transcripts, gene_infos, cds_start, cds_stop, skipped
 
@@ -1126,7 +1137,7 @@ def import_ref_transcripts(fn, transcriptome: Transcriptome, file_format, chromo
         exons, transcripts, gene_infos, cds_start, cds_stop, skipped = _read_gff_file(fn, chromosomes, **kwargs)
 
     if skipped:
-        logger.info('skipped the following categories: %s', skipped)
+        logger.info('skipped the following categories: %s', skipped.keys())
 
     logger.debug('construct interval trees for genes...')
     genes: dict[str, IntervalTree[Gene]] = {}
@@ -1345,7 +1356,7 @@ def transcript_table(self: Transcriptome, samples=None, groups=None, coverage=Fa
     Exports all transcript isoforms within region to a table.
 
     :param samples: provide a list of samples for which coverage / expression information is added.
-    :param groups: provide groups as a dict (as from Transcriptome.groups()), for which coverage  / expression information is added.
+    :param groups: provide groups as a dict (as from Transcriptome.groups()), for which coverage / expression information is added.
     :param coverage: If set, coverage information is added for specified samples / groups.
     :param tpm: If set, expression information (in tpm) is added for specified samples / groups.
     :param tpm_pseudocount: This value is added to the coverage for each transcript, before calculating tpm.
