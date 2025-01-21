@@ -1198,7 +1198,8 @@ def export_end_sequences(self: Transcriptome, reference: str, output: str, crite
     of all transcripts that meet and not meet the criterium respectively.
     :param reference: Path to the reference genome in fasta format or a FastaFile handle
     :param output: Prefix for the two output files. Files will be generated as positive.fa and negative.fa
-    :param criterium: Either a boolean property of a Transcript or a function that takes a Transcript as input and returns a boolean
+    :param criterium: Either a boolean property of a Transcript or a function that takes a Transcript as input and returns a boolean.
+        The property can also be a dotted path to a nested property, e.g. 'sqanti_classification.within_CAGE_peak'.
     :param start: If True, the TSS is used as reference point, otherwise the PAS
     :param window: Tuple of bases specifying the window size around the TSS (PAS) as number of bases (upstream, downstream).
         Total window size is upstream + downstream + 1
