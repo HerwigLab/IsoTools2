@@ -1004,6 +1004,8 @@ def _read_gtf_file(file_name, chromosomes, infer_genes=False, progress_bar=True)
             # gtf of transcriptome reconstructed by external tools may include entries without strand, which can't be mapped to the genome, so skip them
             if ls[6] not in ('+', '-'):
                 logger.warning('skipping line with unknown strand:\n%s', line)
+                # add this entry to skipped
+                # keys are feature types (ls[2], e.g. gene, transcript, exon) and values are sets of feature ids that are searched in ls[-1]
                 skipped[ls[2]].add([i.split(' ')[-1].strip('"') for i in ls[-1].split(sep=';') if f'{ls[2]}_id' in i][0])
                 continue
 
@@ -1058,6 +1060,7 @@ def _read_gtf_file(file_name, chromosomes, infer_genes=False, progress_bar=True)
             elif ls[2] == 'stop_codon' and 'transcript_id' in info:
                 cds_stop[info['transcript_id']] = start if ls[6] == '-' else end
             else:
+                # skip other feature types. Only keep a record of feature type without further information in skipped
                 # this usually happens to reference annotation, eg: UTR, CDS etc.
                 skipped[ls[2]]
 
@@ -1075,7 +1078,7 @@ def _get_tabix_end(tbx_fh):
 def _read_gff_file(file_name, chromosomes, progress_bar=True):
     exons = dict()  # transcript id -> exons
     transcripts = dict()  # gene_id -> transcripts
-    skipped = set()
+    skipped = defaultdict(set)
     genes = dict()
     cds_start = dict()
     cds_stop = dict()
@@ -1122,7 +1125,9 @@ def _read_gff_file(file_name, chromosomes, progress_bar=True):
             elif ls[2] == 'stop_codon' and 'Parent' in info:
                 cds_stop[info['Parent']] = start if ls[6] == '-' else end
             else:
-                skipped.add(ls[2])  # transcript infos?
+                # skip other feature types. Only keep a record of feature type without further information in skipped
+                # this usually happens to reference annotation, eg: UTR, CDS etc.
+                skipped[ls[2]]
     return exons, transcripts, genes, cds_start, cds_stop, skipped
 
 
@@ -1138,7 +1143,7 @@ def import_ref_transcripts(fn, transcriptome: Transcriptome, file_format, chromo
 
     if skipped:
         logger.info('skipped the following categories: %s', skipped.keys())
-
+    
     logger.debug('construct interval trees for genes...')
     genes: dict[str, IntervalTree[Gene]] = {}
     for chrom in gene_infos:

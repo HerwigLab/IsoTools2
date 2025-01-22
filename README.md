@@ -1,14 +1,16 @@
-[![tests](https://github.com/MatthiasLienhard/isotools/actions/workflows/tests.yml/badge.svg)](https://github.com/MatthiasLienhard/isotools/actions?query=workflow%3Atests)
+[![tests](https://github.com/HerwigLab/IsoTools2/actions/workflows/tests.yml/badge.svg)](https://github.com/HerwigLab/IsoTools2/actions?query=workflow%3Atests)
 [![docs](https://readthedocs.org/projects/isotools/badge/?version=latest)](https://isotools.readthedocs.io/en/latest/)
 [![PyPI](https://img.shields.io/pypi/v/isotools.svg)](https://pypi.org/project/isotools)
 [![PyPIDownloadsTotal](https://pepy.tech/badge/isotools)](https://pepy.tech/project/isotools)
-[![Licence: MIT](https://img.shields.io/badge/license-MIT-blue)](https://github.com/MatthiasLienhard/isotools/blob/master/LICENSE.txt)
+[![Licence: MIT](https://img.shields.io/badge/license-MIT-blue)](https://github.com/HerwigLab/IsoTools2/blob/master/LICENSE.txt)
 <img align="right" src="IsoToolsLogo.png" alt="IsoTools Logo" width="300"  />
 
 # IsoTools
+
 IsoTools is a python module for Long Read Transcriptome Sequencing (LRTS) analysis.
 
 Key features:
+
 * Import of LRTS bam files (aligned full length transcripts).
 * Import of reference annotation in gff3/gtf format.
 * Computation of quality control metrics.
@@ -18,26 +20,31 @@ Key features:
 * Data visualization.
 
 ## documentation:
+
 The documentation, including tutorials with real-world case studies and the complete API reference is available at [readthedocs](https://isotools.readthedocs.io/en/latest/ "documentation")
 
 ## installation:
-Isotools is available from PyPI, and can be installed with the pip command:
-```
-python3 -m pip install isotools
 
+Isotools is available from PyPI, and can be installed with the pip command:
+
+```bash
+python3 -m pip install isotools
 ```
+
 Alternatively, to install from github, use the following command:
 
-```
+```bash
 git clone https://github.com/HerwigLab/IsoTools2.git
 cd isotools
 python3 -m pip install .
 ```
 
 ## usage:
+
 This code block demonstrates the basic file import with IsoTools.
 It uses a small test data set contained in this repository, and should run within seconds. The paths are relative to the root of the repository.
 For more comprehensive real world examples see the [tutorials](https://isotools.readthedocs.io/en/latest/tutorials.html "readthedocs").
+
 ```python
 from isotools import Transcriptome
 import logging
@@ -53,6 +60,7 @@ isoseq.save('../tests/data/example_1_isotools.pkl')
 ```
 
 ## Citation and feedback:
-* If you run into any issues, please use the [github issues report feature](https://github.com/MatthiasLienhard/isotools/issues).
+
+* If you run into any issues, please use the [github issues report feature](https://github.com/HerwigLab/IsoTools2/issues).
 * For general feedback, please write me an email to [lienhard@molgen.mpg.de](mailto:lienhard@molgen.mpg.de).
-* If you use isotools in your publication, please cite the following [paper](https://doi.org/10.1093/bioinformatics/btad364): Lienhard et al, Bioinformatics, 2023: IsoTools: a flexible workflow for long-read transcriptome sequencing analysis
+* If you use IsoTools in your publication, please cite the following [paper](https://doi.org/10.1093/bioinformatics/btad364): Lienhard et al, Bioinformatics, 2023: IsoTools: a flexible workflow for long-read transcriptome sequencing analysis
