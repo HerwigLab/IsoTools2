@@ -1006,7 +1006,12 @@ def _read_gtf_file(file_name, chromosomes, infer_genes=False, progress_bar=True)
                 logger.warning('skipping line with unknown strand:\n%s', line)
                 # add this entry to skipped
                 # keys are feature types (ls[2], e.g. gene, transcript, exon) and values are sets of feature ids that are searched in ls[-1]
-                skipped[ls[2]].add([i.split(' ')[-1].strip('"') for i in ls[-1].split(sep=';') if f'{ls[2]}_id' in i][0])
+                feature_id = [i.split(' ')[-1].strip('"') for i in ls[-1].split(sep=';') if f'{ls[2]}_id' or f'{ls[2]}_number' in i]
+                if len(feature_id) == 1:
+                    skipped[ls[2]].add(feature_id[0])
+                else:
+                    logger.debug(f'found {"multiple" if len(feature_id) > 1 else "no"} feature ids in line:\n{line}')
+                    pass
                 continue
 
             start, end = [int(i) for i in ls[3:5]]
