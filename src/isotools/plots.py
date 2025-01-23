@@ -374,7 +374,7 @@ def plot_str_var_number(str_var_count, group_name:'str', n_multi=10, fig_size=(1
 
     group_tab = str_var_count.loc[:, str_var_count.columns.str.startswith(group_name)]
 
-    for i, feature in enumerate(group_tab.columns.str.split('_').str[1].unique()):
+    for i, feature in enumerate(group_tab.columns.str.split('_').str[-1].unique()):
         n_feature_tab = group_tab.filter(regex=feature).value_counts(dropna=True).to_frame().sort_index().reset_index()
         n_feature_tab.columns = ['n_feature', 'n_gene']
 
@@ -398,15 +398,15 @@ def plot_str_var_number(str_var_count, group_name:'str', n_multi=10, fig_size=(1
         axs[i].set_xticklabels([j+1 for j in range(n_multi-1)] + ['>=' + str(n_multi)], rotation=20)
 
         axs[i].set_title(f"# {'exon_chain' if feature == 'ec' else feature.upper()} / gene", fontsize=10)
-        
+
         if 'ylabel' not in axparams:
             axs[0].set_ylabel('number of genes')
-        
+
         axs[i].set(**{k: v for k, v in axparams.items() if k in axs[i].properties()})
 
     if not fig_title:
-        fig_title = f'structure variation in {group_tab.columns.str.split("_").str[0].unique()[0]} samples'
-    
+        fig_title = f'structure variation in {group_tab.columns.str.split("_").str[:-1].str.join("_").unique()[0]} samples'
+
     fig.suptitle(fig_title, fontsize=12)
     fig.tight_layout()
 
@@ -428,8 +428,8 @@ def triangle_plot(str_var_tab, ax=None, colors=None, tax_title=None):
 
     coords = str_var_tab.filter(regex='_(tss|ec|pas)')
     assert all(coords.columns.str.contains('_')), 'name the columns as "group_feature", eg: wt_tss, wt_ec, wt_pas'
-    
-    groups = coords.columns.str.split('_').str[0].unique()
+
+    groups = coords.columns.str.split('_').str[:-1].str.join('_').unique()
 
     if colors is None:
         color_scheme = {k: 'orange' for k in groups}
@@ -475,7 +475,7 @@ def triangle_plot(str_var_tab, ax=None, colors=None, tax_title=None):
     tax.scatter([[1/3, 1/3, 1/3]], marker='*', color='saddlebrown', s=120) # simple
 
     tax.set_background_color(color="whitesmoke", alpha=0.7)
-    
+
     if isinstance(colors, dict):
         tax.legend(title=None, fontsize=10, facecolor='white', frameon=True)
 

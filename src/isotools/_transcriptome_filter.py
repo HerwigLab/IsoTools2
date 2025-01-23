@@ -295,6 +295,7 @@ def iter_transcripts(self: 'Transcriptome', region=None, query=None, min_coverag
     else:
         transcript_filter_fun = query_fun = None
         gene_filter_fun = {}
+
     if genewise:
         for gene in self.iter_genes(region=region, gois=gois, progress_bar=progress_bar):
             gene_filter_eval = {tag: fun(**gene.data) for tag, fun in gene_filter_fun.items()}
