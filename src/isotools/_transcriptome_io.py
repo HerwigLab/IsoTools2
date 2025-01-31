@@ -1196,14 +1196,14 @@ def import_ref_transcripts(fn, transcriptome: Transcriptome, file_format, chromo
     return genes
 
 
-def import_sqanti_classification(self: Transcriptome, path: str):
+def import_sqanti_classification(self: Transcriptome, path: str, progress_bar=True):
     """
     Import a SQANTI classification file.
     See https://github.com/ConesaLab/SQANTI3/wiki/Understanding-the-output-of-SQANTI3-QC#classifcols
     for details.
     """
     sqanti_df = pd.read_csv(path, sep='\t')
-    for _, row in tqdm(sqanti_df.iterrows(), total=len(sqanti_df)):
+    for _, row in tqdm(sqanti_df.iterrows(), total=len(sqanti_df), disable=not progress_bar):
         isoform = row['isoform']
         gene_id = '_'.join(isoform.split('_')[:-1])
         if gene_id not in self:
@@ -1211,6 +1211,44 @@ def import_sqanti_classification(self: Transcriptome, path: str):
         gene = self[gene_id]
         transcript_id = int(isoform.split('_')[-1])
         gene.add_sqanti_classification(transcript_id, row)
+
+
+def export_end_sequences(self: Transcriptome, reference: str, output: str, positive_query, negative_query,
+                         start = True, window = (25, 25), **kwargs):
+    '''
+    Generates two fasta files containing the reference sequences in a window around the TSS (or PAS)
+    of all transcripts that meet and not meet the criterium respectively.
+    :param reference: Path to the reference genome in fasta format or a FastaFile handle
+    :param output: Prefix for the two output files. Files will be generated as positive.fa and negative.fa
+    :param positive_query: Filter string that is passed to iter_transcripts() to select the positive output
+    :param negative_query: Same as positive_query, but for the negative output
+    :param start: If True, the TSS is used as reference point, otherwise the PAS
+    :param window: Tuple of bases specifying the window size around the TSS (PAS) as number of bases (upstream, downstream).
+        Total window size is upstream + downstream + 1
+    :param kwargs: Additional arguments are passed to both calls of iter_transcripts()
+    '''
+    with FastaFile(reference) as ref:
+        known_positions = defaultdict(set)
+        with open(f'{output}_positive.fa', 'w') as positive:
+            for gene, transcript_id, transcript in self.iter_transcripts(query=positive_query, **kwargs):
+                center = transcript['exons'][0][0] if start == (transcript['strand'] == '+') else transcript['exons'][-1][1]
+                window_here = window if transcript['strand'] == '+' else window[::-1]
+                pos = (gene.chrom, center - window_here[0], center + window_here[1] + 1)
+                if pos in known_positions[gene.chrom]:
+                    continue
+                seq = ref.fetch(*pos)
+                positive.write(f'>{gene.id}\t{transcript_id}\t{pos[0]}:{pos[1]}-{pos[2]}\n{seq}\n')
+                known_positions[gene.chrom].add(pos)
+        with open(f'{output}_negative.fa', 'w') as negative:
+            for gene, transcript_id, transcript in self.iter_transcripts(query=negative_query, **kwargs):
+                center = transcript['exons'][0][0] if start == (transcript['strand'] == '+') else transcript['exons'][-1][1]
+                window_here = window if transcript['strand'] == '+' else window[::-1]
+                pos = (gene.chrom, center - window_here[0], center + window_here[1] + 1)
+                if pos in known_positions[gene.chrom]:
+                    continue
+                seq = ref.fetch(*pos)
+                negative.write(f'>{gene.id}\t{transcript_id}\t{pos[0]}:{pos[1]}-{pos[2]}\n{seq}\n')
+                known_positions[gene.chrom].add(pos)
 
 
 def collapse_immune_genes(self: Transcriptome, maxgap=300000):
