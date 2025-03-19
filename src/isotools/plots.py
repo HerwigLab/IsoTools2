@@ -373,8 +373,12 @@ def plot_str_var_number(str_var_count, group_name:'str', n_multi=10, fig_size=(1
     fig, axs = plt.subplots(1, 3, figsize=fig_size)
 
     group_tab = str_var_count.loc[:, str_var_count.columns.str.startswith(group_name)]
+    feature_list = group_tab.columns.str.split('_').str[-1].unique().tolist()
 
-    for i, feature in enumerate(group_tab.columns.str.split('_').str[-1].unique()):
+    # update group_tab to avoid cases where group_name is a prefix of another group name
+    group_tab = group_tab.loc[:, [f'{group_name}_{f}' for f in feature_list]]
+
+    for i, feature in enumerate(feature_list):
         n_feature_tab = group_tab.filter(regex=feature).value_counts(dropna=True).to_frame().sort_index().reset_index()
         n_feature_tab.columns = ['n_feature', 'n_gene']
 
