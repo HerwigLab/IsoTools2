@@ -1537,7 +1537,8 @@ def write_fasta(self: Transcriptome, genome_fn, fn, gzip=False, reference=False,
         logger.info('writing %sfasta file to %s', "gzip compressed " if gzip else "", fn)
         for gene, transcript_ids, _ in self.iter_transcripts(genewise=True, **filter_args):
             tr_seqs = gene.get_sequence(genome_fn, transcript_ids, reference=reference, protein=protein)
-            f.write('\n'.join(f'>{gene.id}_{k} gene={gene.name}\n{v}' for k,v in tr_seqs.items()) + '\n')
+            if len(tr_seqs) > 0:
+                f.write('\n'.join(f'>{gene.id}_{k} gene={gene.name}\n{v}' for k,v in tr_seqs.items()) + '\n')
 
 
 def export_alternative_splicing(self: Transcriptome, out_dir, out_format='mats', reference=False, min_total=100,

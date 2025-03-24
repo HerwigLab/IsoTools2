@@ -334,7 +334,7 @@ class Gene(Interval):
         :param transcript_ids: List of transcript ids for which the sequence are requested.
         :param reference: Specify whether the sequence is fetched for reference transcripts (True)
             or long read transcripts (False, default).
-        :param protein: Return protein sequences instead of transcript sequences.
+        :param protein: Return translated protein coding sequences instead of full transcript sequences.
         :returns: A dictionary of transcript ids and their sequences.
         '''
 
@@ -359,6 +359,7 @@ class Gene(Interval):
             transcript_seqs = {i: reverse_complement(ts) for i, ts in transcript_seqs.items()}
         if not protein:
             return transcript_seqs
+        
         prot_seqs = {}
         for i, transcript in trL:
             orf = transcript.get("CDS", transcript.get("ORF"))
@@ -1076,6 +1077,7 @@ class Gene(Interval):
             if self.strand == '-':
                 start, end = end, start
             if start >= end:  # for monoexons this may happen in rare situations
+                #print(f'start: {start}, end: {end}, monoexon: {len(transcript['exons']) == 1}')
                 assert len(transcript['exons']) == 1
                 transcript['TSS_unified'] = None
                 transcript['PAS_unified'] = None
