@@ -8,17 +8,16 @@
 
 ## [2.0.0]
 
-* supported the analysis of Oxford Nanopore data
-* new option TSS identification according to the reference annotation
+* support the analysis of Oxford Nanopore data
+* new option of TSS identification according to the reference annotation
 * new gene model characteristics, simplex coordinates and relative entropy
 * new visualisation using triangle plot
-* fixed bugs in external gtf import to reconstruct transcriptome
-* imporoved the coordination analysis of TSS and PAS
-* supported the import of SQANTI QC report and filtering based on it
-* supported the export of positive and negative TSS for ML
-* supported proteogenomic approaches at the interface of transcriptomics and proteomics
-* improved code readability and filter tag construction
-* ...
+* fix bugs in external gtf import to reconstruct transcriptome
+* improve the coordination analysis of TSS and PAS
+* support the import of SQANTI QC report and filtering based on it
+* support the export of positive and negative TSS for ML
+* support proteogenomic approaches at the interface of transcriptomics and proteomics
+* improve code readability and filter tag construction
 
 ## [0.3.5]
 
