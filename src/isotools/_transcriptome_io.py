@@ -1149,7 +1149,7 @@ def import_ref_transcripts(fn, transcriptome: Transcriptome, file_format, chromo
 
     if skipped:
         logger.info('skipped the following categories: %s', skipped.keys())
-    
+
     logger.debug('construct interval trees for genes...')
     genes: dict[str, IntervalTree[Gene]] = {}
     for chrom in gene_infos:
@@ -1521,24 +1521,30 @@ def write_gtf(self: Transcriptome, fn, source='isotools', gzip=False, **filter_a
             f.write('\n'.join(('\t'.join(str(field) for field in line) for line in lines)) + '\n')
 
 
-def write_fasta(self: Transcriptome, genome_fn, fn, gzip=False, reference=False, protein=False, **filter_args):
+def write_fasta(self: Transcriptome, genome_fn, fn, gzip=False, reference=False, protein=False, coverage=None, **filter_args):
     '''
     Exports the transcript sequences in fasta format to a file.
 
     :param genome_fn: Path to the genome in fastA format.
     :param reference: Specify whether the sequence is fetched for reference transcripts (True), or long read transcripts (False, default).
     :param protein: Return protein sequences (ORF) instead of transcript sequences.
+    :param coverage: By default, the coverage is not added to the header of the fasta. If set, the allowed values are: 'all', or 'sample'.
+        'all' - total coverage for all samples; 'sample' - coverage by sample.
     :param fn: The filename to write the fasta.
     :param gzip: Compress the output as gzip.
     :param filter_args: Additional filter arguments (e.g. "region", "gois", "query") are passed to iter_transcripts.
     '''
+
+    if coverage:
+        assert coverage in ['all', 'sample'], 'if coverage is set, it must be "all", or "sample"'
+        # todo: add group coverage
 
     with openfile(fn, gzip) as f:
         logger.info('writing %sfasta file to %s', "gzip compressed " if gzip else "", fn)
         for gene, transcript_ids, _ in self.iter_transcripts(genewise=True, **filter_args):
             tr_seqs = gene.get_sequence(genome_fn, transcript_ids, reference=reference, protein=protein)
             if len(tr_seqs) > 0:
-                f.write('\n'.join(f'>{gene.id}_{k} gene={gene.name}\n{v}' for k,v in tr_seqs.items()) + '\n')
+                f.write('\n'.join(f'>{gene.id}_{k} gene={gene.name}{(" coverage=" + (str(gene.coverage[:, k].sum()) if coverage == "all" else str(gene.coverage[:, k])) if coverage else "")}\n{v}' for k, v in tr_seqs.items()) + '\n')
 
 
 def export_alternative_splicing(self: Transcriptome, out_dir, out_format='mats', reference=False, min_total=100,
