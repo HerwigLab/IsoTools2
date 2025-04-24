@@ -222,7 +222,6 @@ def sashimi_plot(self, samples=None, title='Long read sashimi plot', ax=None, ju
 
     The Sashimi plot depicts the genomic long read sequencing coverage of one or more samples as blocks, and junction coverage as arcs.
 
-
     :param samples: Names of the samples to be depicted (as a list).
     :param title: Specify the title of the axis.
     :param ax: Specify the axis.
@@ -242,7 +241,7 @@ def sashimi_plot(self, samples=None, title='Long read sashimi plot', ax=None, ju
     :param min_cov_th: Coverage threshold for a junction to be considdered at all.
     :param text_width: Scaling factor for the horizontal space that gets reserved for labels on the arcs.
         This affects the height of the arcs.
-    :param arc_type: Label the junction arcs with  the "coverage" (e.g. number of supporting reads),
+    :param arc_type: Label the junction arcs with the "coverage" (e.g. number of supporting reads),
         "fraction" (e.g. fraction of supporting reads in %), or "both".
     :param text_height: Scaling factor for the vertical space that gets reserved for labels on the arcs.
         This affects the height of the arcs.'''

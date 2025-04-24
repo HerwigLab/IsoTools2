@@ -454,10 +454,6 @@ def triangle_plot(str_var_tab, ax=None, colors=None, tax_title=None):
     else:
         _, tax = ternary.figure(scale=scale)
 
-    for gn in groups:
-        vals = coords.loc[:, coords.columns.str.startswith(gn)]
-        tax.scatter(vals.to_numpy()[:, [2, 1, 0]], color=color_scheme[gn], alpha=.5, label=gn)
-
     tax.boundary(linewidth=1.5)
     tax.gridlines(multiple=0.25, linewidth=0.5)
 
@@ -479,6 +475,10 @@ def triangle_plot(str_var_tab, ax=None, colors=None, tax_title=None):
     tax.scatter([[1/3, 1/3, 1/3]], marker='*', color='saddlebrown', s=120) # simple
 
     tax.set_background_color(color="whitesmoke", alpha=0.7)
+
+    for gn in groups:
+        vals = coords.loc[:, coords.columns.str.startswith(gn)]
+        tax.scatter(vals.to_numpy()[:, [2, 1, 0]], color=color_scheme[gn], alpha=.7, label=gn)
 
     if isinstance(colors, dict):
         tax.legend(title=None, fontsize=10, facecolor='white', frameon=True)
