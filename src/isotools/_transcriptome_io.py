@@ -1537,7 +1537,6 @@ def write_fasta(self: Transcriptome, genome_fn, fn, gzip=False, reference=False,
 
     if coverage:
         assert coverage in ['all', 'sample'], 'if coverage is set, it must be "all", or "sample"'
-        # todo: add group coverage
 
     with openfile(fn, gzip) as f:
         logger.info('writing %sfasta file to %s', "gzip compressed " if gzip else "", fn)

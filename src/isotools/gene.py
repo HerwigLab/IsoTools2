@@ -1077,7 +1077,6 @@ class Gene(Interval):
             if self.strand == '-':
                 start, end = end, start
             if start >= end:  # for monoexons this may happen in rare situations
-                #print(f'start: {start}, end: {end}, monoexon: {len(transcript['exons']) == 1}')
                 assert len(transcript['exons']) == 1
                 transcript['TSS_unified'] = None
                 transcript['PAS_unified'] = None
