@@ -1408,7 +1408,7 @@ def coordination_test(
 
         except Exception as e:
             logger.error(
-                f"\nError encountered on {print(gene)} {gene.id}   :  {gene.name}."
+                f"\nError encountered on {print(gene)} {gene.id}: {gene.name}."
             )
             raise e
 

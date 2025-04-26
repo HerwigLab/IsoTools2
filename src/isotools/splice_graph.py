@@ -351,8 +351,8 @@ class SegmentGraph:
                 and tss2 >= tss
                 and pas2 <= pas
                 and all(
-                    nodes[transcript_id2, tss2 : pas2 + 1]
-                    == nodes[transcript_id, tss2 : pas2 + 1]
+                    nodes[transcript_id2, tss2: pas2 + 1]
+                    == nodes[transcript_id, tss2: pas2 + 1]
                 )
             }
             truncated.update(contains[transcript_id])  # those are not checked

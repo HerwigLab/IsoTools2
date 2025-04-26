@@ -368,7 +368,7 @@ def iter_genes(
             chrom, start, end = region
         if start is not None:
             if chrom in self.data:
-                genes = self.data[chrom][int(start) : int(end)]
+                genes = self.data[chrom][int(start): int(end)]
             else:
                 raise ValueError("specified chromosome {} not found".format(chrom))
         if gois is not None:

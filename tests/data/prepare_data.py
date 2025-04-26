@@ -99,7 +99,7 @@ def subset_genome(genome_fn, regions, out_fn="example_genome.fa"):
                     (f"{reg[0]}_part", len(seq), offset, line_length, line_length + 1)
                 )
                 for line in (
-                    seq[i : i + line_length] for i in range(0, len(seq), line_length)
+                    seq[i: i + line_length] for i in range(0, len(seq), line_length)
                 ):
                     outfh.write(line + "\n")
                     offset += len(line) + 1

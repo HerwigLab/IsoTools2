@@ -234,7 +234,7 @@ def find_orfs(
     starts = [[], [], []]
     stops = [[], [], []]
     for init, ref_ids in ref_cds.items():
-        starts[init % 3].append((init, sequence[init : (init + 3)], ref_ids))
+        starts[init % 3].append((init, sequence[init: (init + 3)], ref_ids))
     for match in re.finditer("|".join(start_codons), sequence):
         if match.start() not in ref_cds:
             starts[match.start() % 3].append(
@@ -538,11 +538,11 @@ def get_quantiles(pos: list[tuple[int, int]], percentile=[0.5]):
 def smooth(x, window_len=31):
     """smooth the data using a hanning window with requested size."""
     # padding with mirrored
-    s = np.r_[x[window_len - 1 : 0 : -1], x, x[-2 : -window_len - 1 : -1]]
+    s = np.r_[x[window_len - 1: 0: -1], x, x[-2: -window_len - 1: -1]]
     # print(len(s))
     w = np.hanning(window_len)
     y = np.convolve(w / w.sum(), s, mode="valid")
-    return y[int(window_len / 2 - (window_len + 1) % 2) : -int(window_len / 2)]
+    return y[int(window_len / 2 - (window_len + 1) % 2): -int(window_len / 2)]
 
 
 def prepare_contingency_table(eventA: ASEvent, eventB: ASEvent, coverage):
@@ -727,7 +727,7 @@ def count_distinct_pos(pos_list, strict_pos=15):
     picked = 0
     for pos in pos_list:
         if len(tree[pos]) == 0:
-            tree[pos - strict_pos : pos + strict_pos + 1] = 1
+            tree[pos - strict_pos: pos + strict_pos + 1] = 1
             picked += 1
     return picked
 
