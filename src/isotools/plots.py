@@ -85,7 +85,8 @@ def plot_diff_results(
             for group_name in group_names
         }
         # select only samples covered >= min_cov
-        # psi_gr = {groupname: [row[f'{sample}_in_cov'] / row[f'{sample}_total_cov'] for sample in group if row[f'{sample}_total_cov'] >= min_cov] for groupname, group in groups.items()}
+        # psi_gr = {groupname: [row[f'{sample}_in_cov'] / row[f'{sample}_total_cov']
+        #                      for sample in group if row[f'{sample}_total_cov'] >= min_cov] for groupname, group in groups.items()}
         psi_gr_list = [
             (
                 sample,
@@ -453,9 +454,7 @@ def plot_saturation(
     )  # [nr],{'fontsize':20}, loc='left', pad=10)
     axparams.setdefault(
         "ylabel",
-        (
-            f'probaility of sampling at least {cov_th} transcript{"s" if cov_th>1 else ""}'
-        ),
+        f"Probability of sampling at least {cov_th} transcript{'s' if cov_th > 1 else ''}",
     )
     axparams.setdefault("ylim", (0, 1))
     axparams.setdefault("xlabel", "number of reads [million]")

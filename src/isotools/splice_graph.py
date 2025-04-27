@@ -1200,7 +1200,8 @@ class SegmentGraph:
                     else (outA_sets[junctions[0]], {})
                 )
                 # node_C_dict aims to avoid recalculation of node_C for ME events
-                # transcript_id -> node at start of 2nd exon C for transcript_id such that there is one exon (B) (and both flanking introns) between node_A and C; None if transcript ends
+                # transcript_id -> node at start of 2nd exon C for transcript_id such that there is one exon (B) (and both flanking introns) between node_A and C;
+                #   None if transcript ends
                 node_C_dict: dict[int, int | None] = {}
                 # ensure that only ME events with novel transcript_id are reported
                 me_alt_seen = set()

@@ -696,7 +696,8 @@ def entropy_calculation(
     Calculates the entropy of genes based on the coverage of selected transcripts.
 
     :param samples: A list of sample names to specify the samples to be considered. If omitted, all samples are selected.
-    :param groups: Entropy calculation done by groups of samples. A dict {group_name:[sample_name_list]} or a list of group names. If omitted, all the samples are considered as one group.
+    :param groups: Entropy calculation done by groups of samples. A dict {group_name:[sample_name_list]} or a list of group names.
+                   If omitted, all the samples are considered as one group.
     :param min_total: Minimum total coverage of a gene over all the samples in a selected group.
     :param relative: If True, the entropy is normalized by log2 of the number of selected transcripts in the group.
     :param kwargs: Additional keyword arguments are passed to iter_transcripts.
@@ -759,13 +760,16 @@ def str_var_calculation(
     Quantify the structural variation of genes based on selected transcripts.
     Structural variation includes (and in the same order of) distinct TSS positions, exon chains, and PAS positions.
 
-    :param samples: A list of sample names to specify the samples to be considered. If omitted, all samples are selected.
-    :param groups: Quantification done by groups of samples. A dict {group_name:[sample_name_list]} or a list of group names. If omitted, all the samples are considered as one group.
+    :param samples: A list of sample names to specify the samples to be considered.
+                    If omitted, all samples are selected.
+    :param groups: Quantification done by groups of samples. A dict {group_name:[sample_name_list]} or a list of group names.
+                   If omitted, all the samples are considered as one group.
     :param strict_ec: Distance allowed between each position, except for the first/last, in two exon chains so that they can be considered as identical.
     :param strict_pos: Difference allowed between two positions when considering identical TSS/PAS.
     :param count_number: By default False. If True, the number of distinct TSSs, exon chains and PASs in genes directly.
     :param kwargs: Additional keyword arguments are passed to iter_transcripts.
-    :return: A table of structural variation of genes based on selected transcripts, including: gene_id, gene_name, and the variation of TSS, exon chain, and PAS for each group of samples.
+    :return: A table of structural variation of genes based on selected transcripts,
+             including: gene_id, gene_name, and the variation of TSS, exon chain, and PAS for each group of samples.
     """
 
     group_sns = _check_customised_groups(self, samples, groups, sample_idx=False)

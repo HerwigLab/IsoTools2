@@ -2456,7 +2456,8 @@ def write_fasta(
             if len(tr_seqs) > 0:
                 f.write(
                     "\n".join(
-                        f'>{gene.id}_{k} gene={gene.name}{(" coverage=" + (str(gene.coverage[:, k].sum()) if coverage == "all" else str(gene.coverage[:, k])) if coverage else "")}\n{v}'
+                        f'>{gene.id}_{k} gene={gene.name}'
+                        f'{(" coverage=" + (str(gene.coverage[:, k].sum()) if coverage == "all" else str(gene.coverage[:, k])) if coverage else "")}\n{v}'
                         for k, v in tr_seqs.items()
                     )
                     + "\n"
