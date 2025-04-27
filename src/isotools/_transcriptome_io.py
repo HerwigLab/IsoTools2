@@ -1940,11 +1940,20 @@ def import_sqanti_classification(self: Transcriptome, path: str, progress_bar=Tr
         gene.add_sqanti_classification(transcript_id, row)
 
 
-def export_end_sequences(self: Transcriptome, reference: str, output: str, positive_query, negative_query,
-                         start = True, window = (25, 25), **kwargs):
-    '''
+def export_end_sequences(
+    self: Transcriptome,
+    reference: str,
+    output: str,
+    positive_query,
+    negative_query,
+    start=True,
+    window=(25, 25),
+    **kwargs,
+):
+    """
     Generates two fasta files containing the reference sequences in a window around the TSS (or PAS)
     of all transcripts that meet and not meet the criterium respectively.
+
     :param reference: Path to the reference genome in fasta format or a FastaFile handle
     :param output: Prefix for the two output files. Files will be generated as positive.fa and negative.fa
     :param positive_query: Filter string that is passed to iter_transcripts() to select the positive output
@@ -1953,28 +1962,48 @@ def export_end_sequences(self: Transcriptome, reference: str, output: str, posit
     :param window: Tuple of bases specifying the window size around the TSS (PAS) as number of bases (upstream, downstream).
         Total window size is upstream + downstream + 1
     :param kwargs: Additional arguments are passed to both calls of iter_transcripts()
-    '''
+    """
     with FastaFile(reference) as ref:
         known_positions = defaultdict(set)
-        with open(f'{output}_positive.fa', 'w') as positive:
-            for gene, transcript_id, transcript in self.iter_transcripts(query=positive_query, **kwargs):
-                center = transcript['exons'][0][0] if start == (transcript['strand'] == '+') else transcript['exons'][-1][1]
-                window_here = window if transcript['strand'] == '+' else window[::-1]
+        with open(f"{output}_positive.fa", "w") as positive:
+            for gene, transcript_id, transcript in self.iter_transcripts(
+                query=positive_query, **kwargs
+            ):
+                center = (
+                    transcript["exons"][0][0]
+                    if start == (transcript["strand"] == "+")
+                    else transcript["exons"][-1][1]
+                )
+                window_here = (
+                    window if transcript["strand"] == "+" else window[::-1]
+                )
                 pos = (gene.chrom, center - window_here[0], center + window_here[1] + 1)
                 if pos in known_positions[gene.chrom]:
                     continue
                 seq = ref.fetch(*pos)
-                positive.write(f'>{gene.id}\t{transcript_id}\t{pos[0]}:{pos[1]}-{pos[2]}\n{seq}\n')
+                positive.write(
+                    f">{gene.id}\t{transcript_id}\t{pos[0]}:{pos[1]}-{pos[2]}\n{seq}\n"
+                )
                 known_positions[gene.chrom].add(pos)
-        with open(f'{output}_negative.fa', 'w') as negative:
-            for gene, transcript_id, transcript in self.iter_transcripts(query=negative_query, **kwargs):
-                center = transcript['exons'][0][0] if start == (transcript['strand'] == '+') else transcript['exons'][-1][1]
-                window_here = window if transcript['strand'] == '+' else window[::-1]
+        with open(f"{output}_negative.fa", "w") as negative:
+            for gene, transcript_id, transcript in self.iter_transcripts(
+                query=negative_query, **kwargs
+            ):
+                center = (
+                    transcript["exons"][0][0]
+                    if start == (transcript["strand"] == "+")
+                    else transcript["exons"][-1][1]
+                )
+                window_here = (
+                    window if transcript["strand"] == "+" else window[::-1]
+                )
                 pos = (gene.chrom, center - window_here[0], center + window_here[1] + 1)
                 if pos in known_positions[gene.chrom]:
                     continue
                 seq = ref.fetch(*pos)
-                negative.write(f'>{gene.id}\t{transcript_id}\t{pos[0]}:{pos[1]}-{pos[2]}\n{seq}\n')
+                negative.write(
+                    f">{gene.id}\t{transcript_id}\t{pos[0]}:{pos[1]}-{pos[2]}\n{seq}\n"
+                )
                 known_positions[gene.chrom].add(pos)
 
 
