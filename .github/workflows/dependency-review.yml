@@ -9,7 +9,9 @@
 # Public documentation: https://docs.github.com/en/code-security/supply-chain-security/understanding-your-software-supply-chain/about-dependency-review#dependency-review-enforcement
 name: 'Dependency review'
 on:
-  pull_request: # Triggers on every new pull request, regardless of the target branch
+  pull_request:
+    branches:
+      - master # Triggers only on pull requests targeting the master branch
 
 permissions:
   contents: read
