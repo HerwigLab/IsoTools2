@@ -125,7 +125,7 @@ def add_domains_to_table(
         domain_rows,
         orient="index",
         columns=[
-            f'{mode} { "overlap " if overlap_only else ""}domains' for mode in modes
+            f"{mode}{' overlap' if overlap_only else ''} domains" for mode in modes
         ],
     )
     if insert_after is None:

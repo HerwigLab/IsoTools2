@@ -508,7 +508,7 @@ def plot_altsplice_examples(
             fig, axs = gene.sashimi_figure(samples=groups, junctions_of_interest=joi)
 
             fig.tight_layout()
-            stem = f'{file_prefix}_altsplice{file_suffix}_{cat.replace(" ","_").replace("/","_")}_{gene.name}'
+            stem = f"{file_prefix}_altsplice{file_suffix}_{cat.replace(' ', '_').replace('/', '_')}_{gene.name}"
             fig.savefig(f"{stem}_sashimi.{plot_type}")
             # zoom
             if info:
@@ -607,7 +607,7 @@ def test_differential(isoseq: Transcriptome, groups, illu_groups, args, file_suf
         )
         sig = res.padj < 0.1
         logger.info(
-            f'{sum(sig)} differential splice sites in {len(res.loc[sig,"gene"].unique())} genes for {" vs ".join(gr)}'
+            f'{sum(sig)} differential splice sites in {len(res.loc[sig, "gene"].unique())} genes for {" vs ".join(gr)}'
         )
         res.to_csv(f'{file_prefix}_{"_".join(gr)}.csv', index=False)
         if args.diff_plots is not None:

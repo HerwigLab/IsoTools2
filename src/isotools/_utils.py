@@ -9,7 +9,7 @@ import logging
 from scipy.stats import chi2_contingency, fisher_exact
 import math
 from typing import Literal, TypeAlias, TYPE_CHECKING
-from intervaltree import Interval, IntervalTree
+from intervaltree import IntervalTree
 
 
 if TYPE_CHECKING:
