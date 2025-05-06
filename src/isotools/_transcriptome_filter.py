@@ -363,7 +363,7 @@ def iter_genes(
                 try:
                     chrom, pos = region.split(":")
                     start, end = [int(i) for i in pos.split("-")]
-                except BaseException as e:
+                except Exception as e:
                     raise ValueError(
                         'incorrect region {} - specify as string "chr" or "chr:start-end" or tuple ("chr",start,end)'.format(
                             region

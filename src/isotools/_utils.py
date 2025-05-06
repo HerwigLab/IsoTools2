@@ -656,12 +656,12 @@ def dcPSI(con_tab):
 
 def genomic_position(tr_pos, exons, reverse_strand):
     tr_len = sum((e[1] - e[0]) for e in exons)
-    assert all(
-        p <= tr_len for p in tr_pos
-    ), f"Requested positions {tr_pos} for transcript of length {tr_len}."
+    if not all(p <= tr_len for p in tr_pos):
+        raise ValueError(
+            f"One or more positions in {tr_pos} exceed the transcript length of {tr_len}."
+        )
     
-    transformed_tr_pos = [tr_len - p for p in tr_pos] if reverse_strand else tr_pos
-    tr_pos = sorted(set(transformed_tr_pos))
+    tr_pos = sorted(set(tr_len - p for p in tr_pos) if reverse_strand else set(tr_pos))
     
     intron_len = 0
     mapped_pos = []
@@ -683,7 +683,7 @@ def genomic_position(tr_pos, exons, reverse_strand):
     
     # reverse the positions back to the original if reverse_strand is True
     if reverse_strand:
-        tr_pos = [tr_len - p for p in transformed_tr_pos]
+        tr_pos = [tr_len - p for p in tr_pos]
     
     return {p: mp for p, mp in zip(tr_pos, mapped_pos)}
 
