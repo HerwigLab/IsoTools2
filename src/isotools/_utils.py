@@ -668,8 +668,7 @@ def genomic_position(tr_pos, exons, reverse_strand):
     i = 0
     offset = exons[0][0]
     
-    for exon_pair in pairwise(exons):
-        e1, e2 = exon_pair
+    for e1, e2 in pairwise(exons):
         while offset + intron_len + tr_pos[i] < e1[1]:
             mapped_pos.append(offset + intron_len + tr_pos[i])
             i += 1
@@ -680,8 +679,8 @@ def genomic_position(tr_pos, exons, reverse_strand):
             continue
         break
     else:
-        for i in range(i, len(tr_pos)):
-            mapped_pos.append(offset + intron_len + tr_pos[i])
+        for pos in tr_pos[i:]:
+            mapped_pos.append(offset + intron_len + pos)
     
     # reverse the positions back to the original if reverse_strand is True
     if reverse_strand:
