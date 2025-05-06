@@ -9,29 +9,39 @@ import time
 from ._utils import genomic_position, has_overlap
 
 
-logger = logging.getLogger('isotools')
+logger = logging.getLogger("isotools")
 
 
 def parse_hmmer_metadata(fn):
     with gzip.open(fn) as f:
         entries = []
         entry = {}
-        while (True):
+        while True:
             try:
                 line = next(f).decode().strip()
             except StopIteration:
-                metadata = pd.DataFrame(entries).set_index('AC')
+                metadata = pd.DataFrame(entries).set_index("AC")
                 return metadata
-            if line == '//':
+            if line == "//":
                 entries.append(entry.copy())
-            elif line.startswith('#=GF'):
+            elif line.startswith("#=GF"):
                 _, k, v = line.split(maxsplit=2)
                 entry[k] = v
 
 
-def add_domains_to_table(table, transcriptome, source='annotation', categories=None, id_col='gene_id', modes=['trA-trB', 'trB-trA'],
-                         naming='id', overlap_only=False, insert_after=None, **filter_kwargs):
-    '''add domain annotation to table.
+def add_domains_to_table(
+    table,
+    transcriptome,
+    source="annotation",
+    categories=None,
+    id_col="gene_id",
+    modes=None,
+    naming="id",
+    overlap_only=False,
+    insert_after=None,
+    **filter_kwargs,
+):
+    """add domain annotation to table.
 
     :param table: A table, for which domains are derived.
         It should have at least one column with a gene id and one with a list of transcripts.
@@ -47,7 +57,10 @@ def add_domains_to_table(table, transcriptome, source='annotation', categories=N
         If set "False", all domains of the transcripts are considered.
     :param insert_after: Define column after which the domains are inserted into the table, either by column name or index.
         By default, domain columns returned as separate DataFrame.
-    :param **filter_kwargs: additional keywords are passed to Gene.filter_transcripts, to restrict the transcripts to be considered.'''
+    :param **filter_kwargs: additional keywords are passed to Gene.filter_transcripts, to restrict the transcripts to be considered.
+    """
+    if modes is None:
+        modes = ["trA-trB", "trB-trA"]
 
     # set operators:
     # set union: |
@@ -55,21 +68,33 @@ def add_domains_to_table(table, transcriptome, source='annotation', categories=N
     # set intersection: &
 
     # check arguments
-    assert naming in ('id', 'name'), 'naming must be either "id" or "name".'
-    label_idx = 0 if naming == 'id' else 1
+    assert naming in ("id", "name"), 'naming must be either "id" or "name".'
+    label_idx = 0 if naming == "id" else 1
     assert id_col in table, f'Missing id column "{id_col}" in table.'
     # check the "modes": can they be evaluated?
-    tr_cols = {tr_col for mode in modes for tr_col in compile(mode, "<string>", "eval").co_names}
+    tr_cols = {
+        tr_col
+        for mode in modes
+        for tr_col in compile(mode, "<string>", "eval").co_names
+    }
     for mode in modes:  # only set operations allowed, and should return a set
-        assert isinstance(eval(mode, {tr_col: set() for tr_col in tr_cols}), set), f'{mode} does not return a set'
+        assert isinstance(
+            eval(mode, {tr_col: set() for tr_col in tr_cols}), set
+        ), f"{mode} does not return a set"
     # Do they contain only table names?
     missing = [c for c in tr_cols if c not in table.columns]
-    assert len(missing) == 0, f'Missing transcript id columns in table: {", ".join(missing)}.'
+    assert (
+        len(missing) == 0
+    ), f'Missing transcript id columns in table: {", ".join(missing)}.'
     if insert_after is not None:
         if isinstance(insert_after, str):
-            assert insert_after in table.columns, 'cannot find column "{insert_after}" in table.'
+            assert (
+                insert_after in table.columns
+            ), 'cannot find column "{insert_after}" in table.'
             insert_after = table.columns.get_loc(insert_after)
-        assert isinstance(insert_after, int), 'insert_after must be a column name or column index'
+        assert isinstance(
+            insert_after, int
+        ), "insert_after must be a column name or column index"
 
     domain_rows = {}
     for idx, row in table.iterrows():
@@ -80,9 +105,15 @@ def add_domains_to_table(table, transcriptome, source='annotation', categories=N
         domain_sets = {}
         for tr_col in tr_cols:
             domain_sets[tr_col] = set()
-            transcript_ids = set(row[tr_col]) & valid_transcripts if filter_kwargs else set(row[tr_col])
+            transcript_ids = (
+                set(row[tr_col]) & valid_transcripts
+                if filter_kwargs
+                else set(row[tr_col])
+            )
             for transcript_id in transcript_ids:
-                for dom in gene.transcripts[transcript_id].get('domain', {}).get(source, []):
+                for dom in (
+                    gene.transcripts[transcript_id].get("domain", {}).get(source, [])
+                ):
                     if categories is not None and dom[2] not in categories:
                         continue
                     if overlap_only and not has_overlap(dom[4], (row.start, row.end)):
@@ -92,15 +123,29 @@ def add_domains_to_table(table, transcriptome, source='annotation', categories=N
             # evaluate string in mode
             domains.append(eval(mode, domain_sets))
         domain_rows[idx] = domains
-    domain_rows = pd.DataFrame.from_dict(domain_rows, orient='index',
-                                         columns=[f'{mode} { "overlap " if overlap_only else ""}domains' for mode in modes])
+    domain_rows = pd.DataFrame.from_dict(
+        domain_rows,
+        orient="index",
+        columns=[
+            f"{mode}{' overlap' if overlap_only else ''} domains" for mode in modes
+        ],
+    )
     if insert_after is None:
         return domain_rows
-    return pd.concat([table.iloc[:, :insert_after+1], domain_rows, table.iloc[:, insert_after+1:]], axis=1)
+    return pd.concat(
+        [
+            table.iloc[:, : insert_after + 1],
+            domain_rows,
+            table.iloc[:, insert_after + 1 :],
+        ],
+        axis=1,
+    )
 
 
-def import_hmmer_models(path, model_file="Pfam-A.hmm.gz", metadata_file="Pfam-A.hmm.dat.gz"):
-    '''Import the hmmer model and metadata.
+def import_hmmer_models(
+    path, model_file="Pfam-A.hmm.gz", metadata_file="Pfam-A.hmm.dat.gz"
+):
+    """Import the hmmer model and metadata.
 
     This function imports the hmmer Pfam models from "Pfam-A.hmm.gz" and metadata from "Pfam-A.hmm.dat.gz",
     which are available for download on the interpro website, at "https://www.ebi.ac.uk/interpro/download/Pfam/".
@@ -108,24 +153,47 @@ def import_hmmer_models(path, model_file="Pfam-A.hmm.gz", metadata_file="Pfam-A.
 
     :param path: The path where model and metadata files are located.
     :param model_file: The filename of the model file.
-    :param model_file: The filename of the metadata file.'''
+    :param model_file: The filename of the metadata file."""
 
-    metadata = parse_hmmer_metadata(f'{path}/{metadata_file}')
-    with pyhmmer.plan7.HMMFile((f'{path}/{model_file}')) as hmm_file:
+    metadata = parse_hmmer_metadata(f"{path}/{metadata_file}")
+    with pyhmmer.plan7.HMMFile((f"{path}/{model_file}")) as hmm_file:
         hmm_list = list(hmm_file)
     return metadata, hmm_list
 
 
-def get_hmmer_sequences(transcriptome, genome_fn, aa_alphabet, query=True, ref_query=False, region=None, min_coverage=None,
-                        max_coverage=None, gois=None, progress_bar=False):
-    '''Get protein sequences in binary hmmer format.'''
+def get_hmmer_sequences(
+    transcriptome,
+    genome_fn,
+    aa_alphabet,
+    query=True,
+    ref_query=False,
+    region=None,
+    min_coverage=None,
+    max_coverage=None,
+    gois=None,
+    progress_bar=False,
+):
+    """Get protein sequences in binary hmmer format."""
     tr_ids = {}
     if query:
-        for gene, trids, _ in transcriptome.iter_transcripts(genewise=True, query=query, region=region, min_coverage=min_coverage,
-                                                          max_coverage=max_coverage, gois=gois, progress_bar=progress_bar):
+        for gene, trids, _ in transcriptome.iter_transcripts(
+            genewise=True,
+            query=query,
+            region=region,
+            min_coverage=min_coverage,
+            max_coverage=max_coverage,
+            gois=gois,
+            progress_bar=progress_bar,
+        ):
             tr_ids.setdefault(gene.id, [[], []])[0] = trids
     if ref_query:
-        for gene, trids, _ in transcriptome.iter_ref_transcripts(genewise=True, query=ref_query, region=region, gois=gois, progress_bar=progress_bar):
+        for gene, trids, _ in transcriptome.iter_ref_transcripts(
+            genewise=True,
+            query=ref_query,
+            region=region,
+            gois=gois,
+            progress_bar=progress_bar,
+        ):
             tr_ids.setdefault(gene.id, [[], []])[1] = trids
 
     sequences = []
@@ -135,22 +203,37 @@ def get_hmmer_sequences(transcriptome, genome_fn, aa_alphabet, query=True, ref_q
             gene = transcriptome[gene_id]
             seqs = {}
             for source in range(2):
-                for trid, seq in gene.get_sequence(genome_fh, tr_ids[gene_id][source], protein=True, reference=source).items():
+                for trid, seq in gene.get_sequence(
+                    genome_fh, tr_ids[gene_id][source], protein=True, reference=source
+                ).items():
                     seqs.setdefault(seq, []).append((gene_id, source, trid))
             for seq, seqnames in seqs.items():
                 # Hack: use "name" attribute to store an integer.
                 # Must be string encoded since it is interpreted as 0 terminated string and thus truncated
-                text_seq = pyhmmer.easel.TextSequence(sequence=seq, name=bytes(str(len(sequences)), 'utf-8'))
+                text_seq = pyhmmer.easel.TextSequence(
+                    sequence=seq, name=bytes(str(len(sequences)), "utf-8")
+                )
                 sequences.append(text_seq.digitize(aa_alphabet))
                 seq_ids.append(seqnames)
     return sequences, seq_ids
 
+
 #  function of isoseq.Transcriptome
 
 
-def add_hmmer_domains(self, domain_models, genome, query=True, ref_query=False, region=None,
-                      min_coverage=None, max_coverage=None, gois=None, progress_bar=False):
-    '''Align domains to protein sequences  using pyhmmer and add them to the transcript isoforms.
+def add_hmmer_domains(
+    self,
+    domain_models,
+    genome,
+    query=True,
+    ref_query=False,
+    region=None,
+    min_coverage=None,
+    max_coverage=None,
+    gois=None,
+    progress_bar=False,
+):
+    """Align domains to protein sequences  using pyhmmer and add them to the transcript isoforms.
 
     :param domain_models: The domain models and metadata, imported by "isotools.domains.import_hmmer_models" function
     :param genome: Filename of genome fasta file, or Fasta
@@ -160,19 +243,34 @@ def add_hmmer_domains(self, domain_models, genome, query=True, ref_query=False, 
     :param min_coverage: The minimum coverage threshold. Transcripts with less reads in total are ignored.
     :param max_coverage: The maximum coverage threshold. Transcripts with more reads in total are ignored.
     :param progress_bar: Print progress bars.
-    '''
+    """
 
     metadata, models = domain_models
     # 1) get the protein sequences
     pipeline = pyhmmer.plan7.Pipeline(models[0].alphabet)
-    logging.info('extracting protein sequences...')
-    sequences, seq_ids = get_hmmer_sequences(self, genome, models[0].alphabet, query, ref_query, region=region,
-                                             min_coverage=min_coverage, max_coverage=max_coverage, gois=gois,  progress_bar=False)
-    logging.info(f'found {len(sequences)} different protein sequences from {sum(len(idL) for idL in seq_ids)} coding transcripts.')
+    logging.info("extracting protein sequences...")
+    sequences, seq_ids = get_hmmer_sequences(
+        self,
+        genome,
+        models[0].alphabet,
+        query,
+        ref_query,
+        region=region,
+        min_coverage=min_coverage,
+        max_coverage=max_coverage,
+        gois=gois,
+        progress_bar=False,
+    )
+    logging.info(
+        f"found {len(sequences)} different protein sequences from {sum(len(idL) for idL in seq_ids)} coding transcripts."
+    )
 
     # 2) align domain models to sequences
-    logging.info(f'aligning {len(models)} hmmer domain models to protein sequences...')
-    hits = {hmm.accession.decode(): pipeline.search_hmm(hmm, sequences) for hmm in tqdm(models, disable=not progress_bar, unit='domains')}
+    logging.info(f"aligning {len(models)} hmmer domain models to protein sequences...")
+    hits = {
+        hmm.accession.decode(): pipeline.search_hmm(hmm, sequences)
+        for hmm in tqdm(models, disable=not progress_bar, unit="domains")
+    }
 
     # 3) sort domains by gene/source/transcript
     domains = {}
@@ -182,9 +280,17 @@ def add_hmmer_domains(self, domain_models, genome, query=True, ref_query=False, 
             seq_nr = int(h.name.decode())
             for domL in h.domains:
                 ali = domL.alignment
-                transcript_pos = (ali.target_from*3, ali.target_to*3)
+                transcript_pos = (ali.target_from * 3, ali.target_to * 3)
                 domains.setdefault(seq_nr, []).append(
-                    (pfam_acc, infos['ID'], infos['TP'], transcript_pos, h.score, h.pvalue))
+                    (
+                        pfam_acc,
+                        infos["ID"],
+                        infos["TP"],
+                        transcript_pos,
+                        h.score,
+                        h.pvalue,
+                    )
+                )
                 # print(f'{h.name}\t{hmm.name}:\t{ali.target_from}-{ali.target_to}') #which sequence?
 
     # 4) add domains to transcripts
@@ -193,20 +299,51 @@ def add_hmmer_domains(self, domain_models, genome, query=True, ref_query=False, 
     for seq_nr, domL in domains.items():
         for gene_id, reference, transcript_id in seq_ids[seq_nr]:
             gene = self[gene_id]
-            transcript = gene.ref_transcripts[transcript_id] if reference else gene.transcripts[transcript_id]
+            transcript = (
+                gene.ref_transcripts[transcript_id]
+                if reference
+                else gene.transcripts[transcript_id]
+            )
             # get the genomic position of the domain boundaries
-            orf = sorted(gene.find_transcript_positions(transcript_id, transcript.get('CDS', transcript.get('ORF'))[:2], reference=reference))
-            pos_map = genomic_position([p+orf[0] for dom in domL for p in dom[3]], transcript['exons'], gene.strand == '-')
-            trdom = tuple((*dom[:4], (pos_map[dom[3][0]+orf[0]], pos_map[dom[3][1]+orf[0]]), *dom[4:]) for dom in domL)
-            transcript.setdefault('domain', {})['hmmer'] = trdom
+            orf = sorted(
+                gene.find_transcript_positions(
+                    transcript_id,
+                    transcript.get("CDS", transcript.get("ORF"))[:2],
+                    reference=reference,
+                )
+            )
+            pos_map = genomic_position(
+                [p + orf[0] for dom in domL for p in dom[3]],
+                transcript["exons"],
+                gene.strand == "-",
+            )
+            trdom = tuple(
+                (
+                    *dom[:4],
+                    (pos_map[dom[3][0] + orf[0]], pos_map[dom[3][1] + orf[0]]),
+                    *dom[4:],
+                )
+                for dom in domL
+            )
+            transcript.setdefault("domain", {})["hmmer"] = trdom
             tr_count[reference] += 1
             dom_count[reference] += len(domL)
-    logger.info(f'found domains at {dom_count[1]} loci for {tr_count[1]} reference transcripts ' +
-                f'and at {dom_count[0]} loci for {tr_count[0]} long read transcripts.')
+    logger.info(
+        f"found domains at {dom_count[1]} loci for {tr_count[1]} reference transcripts "
+        + f"and at {dom_count[0]} loci for {tr_count[0]} long read transcripts."
+    )
 
 
-def add_annotation_domains(self, annotation, category, id_col='uniProtId', name_col='name', inframe=True, progress_bar=False):
-    '''Annotate isoforms with protein domains from uniprot ucsc table files.
+def add_annotation_domains(
+    self,
+    annotation,
+    category,
+    id_col="uniProtId",
+    name_col="name",
+    inframe=True,
+    progress_bar=False,
+):
+    """Annotate isoforms with protein domains from uniprot ucsc table files.
 
     This function adds protein domains and other protein annotation to the transcripts.
     Annotation tables can be retrieved from https://genome.ucsc.edu/cgi-bin/hgTables. Select
@@ -219,119 +356,206 @@ def add_annotation_domains(self, annotation, category, id_col='uniProtId', name_
     :param inframe: If set True (default), only annotations starting in frame are added to the transcript.
     :param append: If set True, the annotation is added to existing annotation. This may lead to duplicate entries.
         By default, annotation of the same category is removed before annotation is added.
-    :param progress_bar: If set True, the progress is depicted with a progress bar.'''
+    :param progress_bar: If set True, the progress is depicted with a progress bar."""
 
     domain_count = 0
     # clear domains of that category
     if isinstance(annotation, str):
-        anno = pd.read_csv(annotation, sep='\t', low_memory=False)
+        anno = pd.read_csv(annotation, sep="\t", low_memory=False)
     elif isinstance(annotation, pd.DataFrame):
         anno = annotation
     else:
         raise ValueError('"annotation" should be file name or pandas.DataFrame object')
-    anno = anno.rename({'#chrom': 'chrom'}, axis=1)
-    not_found = [col for col in ['chrom', 'chromStart', 'chromEnd', 'chromStarts', 'blockSizes', name_col] if col not in anno.columns]
-    assert len(not_found) == 0, f'did not find the following columns in the annotation table: {", ".join(not_found)}'
-    for _, row in tqdm(anno.iterrows(), total=len(anno), disable=not progress_bar, unit='domains'):
-        if row['chrom'] not in self.chromosomes:
+    anno = anno.rename({"#chrom": "chrom"}, axis=1)
+    not_found = [
+        col
+        for col in [
+            "chrom",
+            "chromStart",
+            "chromEnd",
+            "chromStarts",
+            "blockSizes",
+            name_col,
+        ]
+        if col not in anno.columns
+    ]
+    assert (
+        len(not_found) == 0
+    ), f'did not find the following columns in the annotation table: {", ".join(not_found)}'
+    for _, row in tqdm(
+        anno.iterrows(), total=len(anno), disable=not progress_bar, unit="domains"
+    ):
+        if row["chrom"] not in self.chromosomes:
             continue
-        for gene in self.iter_genes(region=(row['chrom'], row.chromStart, row.chromEnd)):
-            block_starts, block_sizes = list(map(int, row.chromStarts.split(','))), list(map(int, row.blockSizes.split(',')))
+        for gene in self.iter_genes(
+            region=(row["chrom"], row.chromStart, row.chromEnd)
+        ):
+            block_starts, block_sizes = list(
+                map(int, row.chromStarts.split(","))
+            ), list(map(int, row.blockSizes.split(",")))
             blocks = []
             for start, length in zip(block_starts, block_sizes):
-                if not blocks or row.chromStart+start > blocks[-1][1]:
-                    blocks.append([row.chromStart+start, row.chromStart+start+length])
+                if not blocks or row.chromStart + start > blocks[-1][1]:
+                    blocks.append(
+                        [row.chromStart + start, row.chromStart + start + length]
+                    )
                 else:
-                    blocks[-1][1] = row.chromStart+start+length
+                    blocks[-1][1] = row.chromStart + start + length
 
             for ref in range(2):
                 transcripts = gene.ref_transcripts if ref else gene.transcripts
                 if not transcripts:
                     continue
                 sg = gene.ref_segment_graph if ref else gene.segment_graph
-                transcript_ids = [transcript_id for transcript_id in sg.search_transcript(blocks, complete=False, include_ends=True)
-                                  if 'ORF' in transcripts[transcript_id] or 'CDS' in transcripts[transcript_id]]
+                transcript_ids = [
+                    transcript_id
+                    for transcript_id in sg.search_transcript(
+                        blocks, complete=False, include_ends=True
+                    )
+                    if "ORF" in transcripts[transcript_id]
+                    or "CDS" in transcripts[transcript_id]
+                ]
                 for transcript_id in transcript_ids:
                     transcript = transcripts[transcript_id]
                     try:
-                        orf_pos = sorted(gene.find_transcript_positions(transcript_id, transcript.get('CDS', transcript.get('ORF'))[:2], reference=ref))
-                        domain_pos = sorted(gene.find_transcript_positions(transcript_id, (row.chromStart, row.chromEnd), reference=ref))
+                        orf_pos = sorted(
+                            gene.find_transcript_positions(
+                                transcript_id,
+                                transcript.get("CDS", transcript.get("ORF"))[:2],
+                                reference=ref,
+                            )
+                        )
+                        domain_pos = sorted(
+                            gene.find_transcript_positions(
+                                transcript_id,
+                                (row.chromStart, row.chromEnd),
+                                reference=ref,
+                            )
+                        )
                     except TypeError:  # > not supported for None, None
                         continue
-                    if not (orf_pos[0] <= domain_pos[0] and domain_pos[1] <= orf_pos[1]):  # check within ORF
+                    if not (
+                        orf_pos[0] <= domain_pos[0] and domain_pos[1] <= orf_pos[1]
+                    ):  # check within ORF
                         continue
-                    if inframe and (domain_pos[0]-orf_pos[0]) % 3 != 0:  # check inframe
+                    if (
+                        inframe and (domain_pos[0] - orf_pos[0]) % 3 != 0
+                    ):  # check inframe
                         continue
                     domain_count += 1
-                    dom_pos = (domain_pos[0]-orf_pos[0], domain_pos[1]-orf_pos[0])
-                    dom_vals = (row[id_col], row[name_col], category,  dom_pos, (row.chromStart, row.chromEnd))
+                    dom_pos = (domain_pos[0] - orf_pos[0], domain_pos[1] - orf_pos[0])
+                    dom_vals = (
+                        row[id_col],
+                        row[name_col],
+                        category,
+                        dom_pos,
+                        (row.chromStart, row.chromEnd),
+                    )
                     # check if present already
-                    if dom_vals not in transcript.setdefault('domain', {}).setdefault('annotation', []):
-                        transcript['domain']['annotation'].append(dom_vals)
+                    if dom_vals not in transcript.setdefault("domain", {}).setdefault(
+                        "annotation", []
+                    ):
+                        transcript["domain"]["annotation"].append(dom_vals)
 
-    logger.info(f'found domains at {domain_count} transcript loci')
+    logger.info(f"found domains at {domain_count} transcript loci")
 
 
-def get_interpro_domains(seqs, email, baseUrl='http://www.ebi.ac.uk/Tools/services/rest/iprscan5', progress_bar=True, max_jobs=25, poll_time=5):
-    '''Request domains from ebi interpro REST API.
+def get_interpro_domains(
+    seqs,
+    email,
+    baseUrl="http://www.ebi.ac.uk/Tools/services/rest/iprscan5",
+    progress_bar=True,
+    max_jobs=25,
+    poll_time=5,
+):
+    """Request domains from ebi interpro REST API.
 
-    Returns a list of the json responses as received, one for each requested sequenced.'''
+    Returns a list of the json responses as received, one for each requested sequenced.
+    """
     # examples at https://raw.githubusercontent.com/ebi-wp/webservice-clients/master/python/iprscan5.py
 
-    requestUrl = baseUrl + u'/run/'
+    requestUrl = baseUrl + "/run/"
     current_jobs = {}
     if isinstance(seqs, str):
         seqs = [seqs]
-    domains = [None]*len(seqs)
+    domains = [None] * len(seqs)
     i = 0
-    with tqdm(unit='proteins', disable=not progress_bar, total=len(seqs)) as pbar:
+    with tqdm(unit="proteins", disable=not progress_bar, total=len(seqs)) as pbar:
         try:
             while seqs or current_jobs:  # still something to do
                 while seqs and len(current_jobs) < max_jobs:  # start more jobs
-                    params = {u'email': email, u'sequence': seqs.pop()}
+                    params = {"email": email, "sequence": seqs.pop()}
                     resp = requests.post(requestUrl, data=params)
                     # todo: error handling - what if request fails?
                     current_jobs[resp.content.decode()] = i
-                    pbar.set_description(f'waiting for {len(current_jobs)} jobs')
+                    pbar.set_description(f"waiting for {len(current_jobs)} jobs")
                     i += 1
                 time.sleep(poll_time)
                 done = set()
                 for job_id, idx in current_jobs.items():  # check the current jobs
-                    url = baseUrl + u'/status/' + job_id
+                    url = baseUrl + "/status/" + job_id
                     resp = requests.get(url)
                     if not resp.ok:  # todo: error handling: e.g. timeout error?
                         continue
                     status = resp.content.decode()
-                    if status in ('PENDING', 'RUNNING'):
+                    if status in ("PENDING", "RUNNING"):
                         continue
-                    elif status == 'FINISHED':
-                        url = baseUrl + u'/result/' + job_id + '/json'
+                    elif status == "FINISHED":
+                        url = baseUrl + "/result/" + job_id + "/json"
                         resp = requests.get(url)
                         if resp.ok:
-                            domains[idx] = resp.json()['results']  # else?
+                            domains[idx] = resp.json()["results"]  # else?
                             pbar.update(1)
                         else:
-                            domains[idx] = [{'status': 'FAILED', 'reason': 'resp_not_ok', 'jobid': job_id}]
+                            domains[idx] = [
+                                {
+                                    "status": "FAILED",
+                                    "reason": "resp_not_ok",
+                                    "jobid": job_id,
+                                }
+                            ]
                         done.add(job_id)
-                    elif status == 'FAILED':  # try again?
-                        logger.warning(f'Failed to get response for sequence {idx}')
+                    elif status == "FAILED":  # try again?
+                        logger.warning(f"Failed to get response for sequence {idx}")
                         done.add(job_id)
-                        domains[idx] = [{'status': 'FAILED', 'reason': 'job failed', 'jobid': job_id}]
+                        domains[idx] = [
+                            {
+                                "status": "FAILED",
+                                "reason": "job failed",
+                                "jobid": job_id,
+                            }
+                        ]
                     else:
-                        logger.warning(f'unhandled status for sequence {idx}: jobid={job_id}')
+                        logger.warning(
+                            f"unhandled status for sequence {idx}: jobid={job_id}"
+                        )
                 for job_id in done:  # remove the finished jobs
                     current_jobs.pop(job_id)
-                pbar.set_description(f'waiting for {len(current_jobs)} jobs')
+                pbar.set_description(f"waiting for {len(current_jobs)} jobs")
         except KeyboardInterrupt:
-            logger.warning(f'Interrupting retrieval of {len(current_jobs)} jobs: [{",".join(current_jobs)}]')  # give the user the chance to check the jobs
+            logger.warning(
+                f'Interrupting retrieval of {len(current_jobs)} jobs: [{",".join(current_jobs)}]'
+            )  # give the user the chance to check the jobs
     return domains
+
 
 # method of isotools.Gene
 
 
-def add_interpro_domains(self, genome, email, baseUrl='http://www.ebi.ac.uk/Tools/services/rest/iprscan5',  max_jobs=25, poll_time=5,
-                         query=True, ref_query=False, min_coverage=None, max_coverage=None,  progress_bar=True):
-    '''Add domains to gene by webrequests to ebi interpro REST API.
+def add_interpro_domains(
+    self,
+    genome,
+    email,
+    baseUrl="http://www.ebi.ac.uk/Tools/services/rest/iprscan5",
+    max_jobs=25,
+    poll_time=5,
+    query=True,
+    ref_query=False,
+    min_coverage=None,
+    max_coverage=None,
+    progress_bar=True,
+):
+    """Add domains to gene by webrequests to ebi interpro REST API.
 
     This function adds protein domains from interpro to the transcripts.
     Note that these rquest may take around 60 seconds per sequence.
@@ -345,38 +569,73 @@ def add_interpro_domains(self, genome, email, baseUrl='http://www.ebi.ac.uk/Tool
     :param ref_query: Query string to select the reference transcripts, or True/False to include/exclude all transcripts.
     :param min_coverage: The minimum coverage threshold. Transcripts with less reads in total are ignored.
     :param max_coverage: The maximum coverage threshold. Transcripts with more reads in total are ignored.
-    :param progress_bar: If set True, the progress is depicted with a progress bar.'''
+    :param progress_bar: If set True, the progress is depicted with a progress bar."""
 
     seqs = {}  # seq -> transcript_ids dict, to avoid requesting the same sequence
     if query:
-        transcript_ids = self.filter_transcripts(query=query, min_coverage=min_coverage, max_coverage=max_coverage)
-        for transcript_id, seq in self.get_sequence(genome, transcript_ids, protein=True).items():
-            seqs.setdefault(seq, {}).setdefault('isotools', []).append(transcript_id)
+        transcript_ids = self.filter_transcripts(
+            query=query, min_coverage=min_coverage, max_coverage=max_coverage
+        )
+        for transcript_id, seq in self.get_sequence(
+            genome, transcript_ids, protein=True
+        ).items():
+            seqs.setdefault(seq, {}).setdefault("isotools", []).append(transcript_id)
     if ref_query:
         ref_transcript_ids = self.filter_ref_transcripts(query=ref_query)
-        for transcript_id, seq in self.get_sequence(genome, ref_transcript_ids, protein=True, reference=True).items():
-            seqs.setdefault(seq, {}).setdefault('reference', []).append(transcript_id)
+        for transcript_id, seq in self.get_sequence(
+            genome, ref_transcript_ids, protein=True, reference=True
+        ).items():
+            seqs.setdefault(seq, {}).setdefault("reference", []).append(transcript_id)
 
-    dom_results = get_interpro_domains(list(seqs.keys()), email, baseUrl, progress_bar, max_jobs, poll_time)
+    dom_results = get_interpro_domains(
+        list(seqs.keys()), email, baseUrl, progress_bar, max_jobs, poll_time
+    )
     for i, (dom,) in enumerate(dom_results):
-        if 'matches' not in dom:
-            logger.warning(f'no response for sequence of {list(seqs.values())[i]}')
+        if "matches" not in dom:
+            logger.warning(f"no response for sequence of {list(seqs.values())[i]}")
             continue
         domL = []
-        for match in dom['matches']:
-            for loc in match['locations']:
-                entry = match['signature'].get('entry')
-                domL.append((str(match['signature']['accession']),  # short name
-                             str(match['signature']['name']),
-                             entry.get('type', "unknown") if entry else "unknown",  # type
-                             (loc['start']*3, loc['end']*3),  # position
-                             loc.get('hmmBounds')))  # completeness
+        for match in dom["matches"]:
+            for loc in match["locations"]:
+                entry = match["signature"].get("entry")
+                domL.append(
+                    (
+                        str(match["signature"]["accession"]),  # short name
+                        str(match["signature"]["name"]),
+                        entry.get("type", "unknown") if entry else "unknown",  # type
+                        (loc["start"] * 3, loc["end"] * 3),  # position
+                        loc.get("hmmBounds"),
+                    )
+                )  # completeness
                 # todo: potentially add more relevant information here
         for reference in range(2):
-            for transcript_id in seqs[dom['sequence']].get('reference' if reference else 'isotools', []):
-                transcript = self.ref_transcripts[transcript_id] if reference else self.transcripts[transcript_id]
-                orf = sorted(self.find_transcript_positions(transcript_id, transcript.get('CDS', transcript.get('ORF'))[:2], reference=reference))
-                pos_map = genomic_position([p+orf[0] for dom in domL for p in dom[3]], transcript['exons'], self.strand == '-')
-                trdom = tuple((*dom[:4], (pos_map[dom[3][0]+orf[0]], pos_map[dom[3][1]+orf[0]]), *dom[4:]) for dom in domL)
+            for transcript_id in seqs[dom["sequence"]].get(
+                "reference" if reference else "isotools", []
+            ):
+                transcript = (
+                    self.ref_transcripts[transcript_id]
+                    if reference
+                    else self.transcripts[transcript_id]
+                )
+                orf = sorted(
+                    self.find_transcript_positions(
+                        transcript_id,
+                        transcript.get("CDS", transcript.get("ORF"))[:2],
+                        reference=reference,
+                    )
+                )
+                pos_map = genomic_position(
+                    [p + orf[0] for dom in domL for p in dom[3]],
+                    transcript["exons"],
+                    self.strand == "-",
+                )
+                trdom = tuple(
+                    (
+                        *dom[:4],
+                        (pos_map[dom[3][0] + orf[0]], pos_map[dom[3][1] + orf[0]]),
+                        *dom[4:],
+                    )
+                    for dom in domL
+                )
 
-                transcript.setdefault('domain', {})['interpro'] = trdom
+                transcript.setdefault("domain", {})["interpro"] = trdom

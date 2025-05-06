@@ -1,0 +1,53 @@
+# This is a GitHub Actions workflow file for linting Python code using Tox and Flake8.
+name: Lint
+
+on:
+  push:
+    branches:
+      - '**'  # run on every push to any branch
+  pull_request:
+    branches:
+      - master  # run on pull requests targeting the master branch
+
+permissions:
+  contents: write
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch the full history to allow branch checkout
+
+      # Step 2: Determine the branch name
+      - name: Get branch name
+        id: vars
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "BRANCH_NAME=${{ github.head_ref }}" >> $GITHUB_ENV
+          else
+            echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
+          fi
+
+      # Step 3: Install dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install tox
+
+      # Step 4: Run Tox for Linting
+      - name: Run Tox Lint
+        run: tox -e flake8
+
+      # Step 5: Commit and push changes if Black reformats files
+      - name: Commit and push changes
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git checkout $BRANCH_NAME  # Check out the branch
+          git add .
+          git commit -m "Apply linting fixes" || echo "No changes to commit"
+          git push origin $BRANCH_NAME
