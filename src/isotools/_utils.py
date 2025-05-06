@@ -83,9 +83,7 @@ def get_error_rate(bam_fn, n=1000):
     return (qual / total_len) * 100
 
 
-def basequal_hist(
-    bam_fn, qual_bins=None, len_bins=None, n=10000
-):
+def basequal_hist(bam_fn, qual_bins=None, len_bins=None, n=10000):
     """calculates base quality statistics for a bam file:
 
     :param bam_fn: path to bam file
@@ -226,9 +224,7 @@ def kozak_score(sequence, pos, pwm=DEFAULT_KOZAK_PWM):
     )
 
 
-def find_orfs(
-    sequence, start_codons=None, stop_codons=None, ref_cds=None
-):
+def find_orfs(sequence, start_codons=None, stop_codons=None, ref_cds=None):
     """Find all open reading frames on the forward strand of the sequence.
     :param sequence: DNA sequence to search for ORFs.
     :param start_codons: List of start codons (default: ["ATG"]).
@@ -249,7 +245,7 @@ def find_orfs(
     starts = [[], [], []]
     stops = [[], [], []]
     for init, ref_ids in ref_cds.items():
-        starts[init % 3].append((init, sequence[init: (init + 3)], ref_ids))
+        starts[init % 3].append((init, sequence[init : (init + 3)], ref_ids))
     for match in re.finditer("|".join(start_codons), sequence):
         if match.start() not in ref_cds:
             starts[match.start() % 3].append(
@@ -324,7 +320,7 @@ def _filter_function(expression, context_filters=None):
     """
     if context_filters is None:
         context_filters = {}
-    
+
     assert isinstance(expression, str), "expression should be a string"
     # extract argument names
     used_filters = []
@@ -547,7 +543,7 @@ def get_quantiles(pos: list[tuple[int, int]], percentile=None):
     """
     if percentile is None:
         percentile = [0.5]
-    
+
     # percentile should be sorted, and between 0 and 1
     total = sum(cov for _, cov in pos)
     n = 0
@@ -564,11 +560,11 @@ def get_quantiles(pos: list[tuple[int, int]], percentile=None):
 def smooth(x, window_len=31):
     """smooth the data using a hanning window with requested size."""
     # padding with mirrored
-    s = np.r_[x[window_len - 1: 0: -1], x, x[-2: -window_len - 1: -1]]
+    s = np.r_[x[window_len - 1 : 0 : -1], x, x[-2 : -window_len - 1 : -1]]
     # print(len(s))
     w = np.hanning(window_len)
     y = np.convolve(w / w.sum(), s, mode="valid")
-    return y[int(window_len / 2 - (window_len + 1) % 2): -int(window_len / 2)]
+    return y[int(window_len / 2 - (window_len + 1) % 2) : -int(window_len / 2)]
 
 
 def prepare_contingency_table(eventA: ASEvent, eventB: ASEvent, coverage):
@@ -660,14 +656,14 @@ def genomic_position(tr_pos, exons, reverse_strand):
         raise ValueError(
             f"One or more positions in {tr_pos} exceed the transcript length of {tr_len}."
         )
-    
+
     tr_pos = sorted(set(tr_len - p for p in tr_pos) if reverse_strand else set(tr_pos))
-    
+
     intron_len = 0
     mapped_pos = []
     i = 0
     offset = exons[0][0]
-    
+
     for e1, e2 in pairwise(exons):
         while offset + intron_len + tr_pos[i] < e1[1]:
             mapped_pos.append(offset + intron_len + tr_pos[i])
@@ -681,11 +677,11 @@ def genomic_position(tr_pos, exons, reverse_strand):
     else:
         for pos in tr_pos[i:]:
             mapped_pos.append(offset + intron_len + pos)
-    
+
     # reverse the positions back to the original if reverse_strand is True
     if reverse_strand:
         tr_pos = [tr_len - p for p in tr_pos]
-    
+
     return {p: mp for p, mp in zip(tr_pos, mapped_pos)}
 
 
@@ -758,7 +754,7 @@ def count_distinct_pos(pos_list, strict_pos=15):
     picked = 0
     for pos in pos_list:
         if len(tree[pos]) == 0:
-            tree[pos - strict_pos: pos + strict_pos + 1] = 1
+            tree[pos - strict_pos : pos + strict_pos + 1] = 1
             picked += 1
     return picked
 

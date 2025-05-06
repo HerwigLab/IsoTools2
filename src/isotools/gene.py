@@ -107,6 +107,7 @@ class GeneData(TypedDict, total=False):
 
 class Gene(Interval):
     "This class stores all gene information and transcripts. It is derived from intervaltree.Interval."
+
     required_infos = ["ID", "chr", "strand"]
 
     data: GeneData
@@ -509,7 +510,7 @@ class Gene(Interval):
         for i, transcript in trL:
             transcript_seq = ""
             for exon in transcript["exons"]:
-                transcript_seq += seq[exon[0] - pos[0]: exon[1] - pos[0]]
+                transcript_seq += seq[exon[0] - pos[0] : exon[1] - pos[0]]
             transcript_seqs[i] = transcript_seq
 
         if self.strand == "-":
@@ -528,7 +529,7 @@ class Gene(Interval):
                 self.find_transcript_positions(i, orf[:2], reference=reference)
             )
             try:
-                prot_seqs[i] = translate(transcript_seqs[i][pos[0]: pos[1]], cds=True)
+                prot_seqs[i] = translate(transcript_seqs[i][pos[0] : pos[1]], cds=True)
             except TranslationError:
                 logger.warning(
                     f'CDS sequence of {self.id} {"reference" if reference else ""} transcript {i} cannot be translated.'
@@ -609,7 +610,7 @@ class Gene(Interval):
         is added to the transcript properties transcript["ORF"]. Additionally, the Fickett score, and the hexamer score are computed. For the
         latter, hexamer frequencies in coding and noncoding transcripts are needed. See CPAT python module for prebuilt tables and
         instructions.
-        
+
         :param tr_filter: dict with filtering parameters passed to iter_transcripts or iter_ref_transcripts
         :param min_len: Minimum length of the ORF, Does not apply to annotated initiation sites.
         :param min_kozak: Minimal score for translation initiation site. Does not apply to annotated initiation sites.
@@ -1605,8 +1606,8 @@ def repeat_len(seq1, seq2, wobble, max_mm):
     score = [0] * (2 * wobble + 1)
     delta = int(len(seq1) / 2 - wobble)
     for w in range(2 * wobble + 1):  # wobble
-        s1 = seq1[w: len(seq1) - (2 * wobble - w)]
-        s2 = seq2[wobble: len(seq2) - wobble]
+        s1 = seq1[w : len(seq1) - (2 * wobble - w)]
+        s2 = seq2[wobble : len(seq2) - wobble]
         align = [a == b for a, b in zip(s1, s2)]
         score_left = find_runlength(reversed(align[:delta]), max_mm)
         score_right = find_runlength(align[delta:], max_mm)

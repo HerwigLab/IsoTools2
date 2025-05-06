@@ -9,6 +9,7 @@ logger = logging.getLogger("isotools")
 
 class Coverage:
     "stores the illumina read coverage of a gene"
+
     # plan: make a binned version, or use run length encoding
 
     def __init__(self, cov, junctions, offset, chrom=None):

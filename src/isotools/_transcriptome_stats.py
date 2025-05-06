@@ -942,7 +942,7 @@ def transcript_length_hist(
         tr_filter = {}
     if ref_filter is None:
         ref_filter = {}
-    
+
     trlen = []
     cov = []
     current = None
@@ -1002,7 +1002,7 @@ def transcript_coverage_hist(
     """
     if tr_filter is None:
         tr_filter = {}
-    
+
     # get the transcript coverage in bins for groups
     # return count dataframe and suggested default parameters for plot_distr
     cov = []
@@ -1060,7 +1060,7 @@ def transcripts_per_gene_hist(
         tr_filter = {}
     if ref_filter is None:
         ref_filter = {}
-    
+
     ntr = []
     current = None
     if groups is None:
@@ -1136,7 +1136,7 @@ def exons_per_transcript_hist(
         tr_filter = {}
     if ref_filter is None:
         ref_filter = {}
-    
+
     n_exons = []
     cov = []
     current = None
@@ -1207,7 +1207,7 @@ def downstream_a_hist(
         transcript_filter = {}
     if ref_filter is None:
         ref_filter = {}
-    
+
     acontent = []
     cov = []
     current = None

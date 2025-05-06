@@ -106,7 +106,7 @@ def add_orf_prediction(
         filter_transcripts = {}
     if filter_ref_transcripts is None:
         filter_ref_transcripts = {}
-    
+
     if hexamer_file is None:
         coding = None
         noncoding = None
@@ -373,7 +373,7 @@ def iter_genes(
             chrom, start, end = region
         if start is not None:
             if chrom in self.data:
-                genes = self.data[chrom][int(start): int(end)]
+                genes = self.data[chrom][int(start) : int(end)]
             else:
                 raise ValueError("specified chromosome {} not found".format(chrom))
         if gois is not None:

@@ -889,7 +889,7 @@ def _add_chimeric(
                         genes_overlap = [
                             gene
                             for gene in transcriptome.data[part[0]][
-                                part[2][0][0]: part[2][-1][1]
+                                part[2][0][0] : part[2][-1][1]
                             ]
                             if gene.strand == part[1]
                         ]
@@ -1186,7 +1186,7 @@ def _add_sample_transcript(
     if genes_overlap is None:
         # At this point the transcript still uses min and max from all reads for start and end
         genes_overlap = transcriptome.data[chrom][
-            transcript["exons"][0][0]: transcript["exons"][-1][1]
+            transcript["exons"][0][0] : transcript["exons"][-1][1]
         ]
     genes_overlap_strand = [
         gene for gene in genes_overlap if gene.strand == transcript["strand"]
@@ -1927,10 +1927,12 @@ def import_sqanti_classification(self: Transcriptome, path: str, progress_bar=Tr
     See https://github.com/ConesaLab/SQANTI3/wiki/Understanding-the-output-of-SQANTI3-QC#classifcols
     for details.
     """
-    sqanti_df = pd.read_csv(path, sep='\t')
-    for _, row in tqdm(sqanti_df.iterrows(), total=len(sqanti_df), disable=not progress_bar):
-        isoform = row['isoform']
-        gene_id = '_'.join(isoform.split('_')[:-1])
+    sqanti_df = pd.read_csv(path, sep="\t")
+    for _, row in tqdm(
+        sqanti_df.iterrows(), total=len(sqanti_df), disable=not progress_bar
+    ):
+        isoform = row["isoform"]
+        gene_id = "_".join(isoform.split("_")[:-1])
         if gene_id not in self:
             raise KeyError(
                 f"Gene {gene_id} not found in transcriptome. Make sure you passed the correct SQANTI file"
@@ -1974,9 +1976,7 @@ def export_end_sequences(
                     if start == (transcript["strand"] == "+")
                     else transcript["exons"][-1][1]
                 )
-                window_here = (
-                    window if transcript["strand"] == "+" else window[::-1]
-                )
+                window_here = window if transcript["strand"] == "+" else window[::-1]
                 pos = (gene.chrom, center - window_here[0], center + window_here[1] + 1)
                 if pos in known_positions[gene.chrom]:
                     continue
@@ -1994,9 +1994,7 @@ def export_end_sequences(
                     if start == (transcript["strand"] == "+")
                     else transcript["exons"][-1][1]
                 )
-                window_here = (
-                    window if transcript["strand"] == "+" else window[::-1]
-                )
+                window_here = window if transcript["strand"] == "+" else window[::-1]
                 pos = (gene.chrom, center - window_here[0], center + window_here[1] + 1)
                 if pos in known_positions[gene.chrom]:
                     continue
@@ -2049,7 +2047,7 @@ def collapse_immune_genes(self: Transcriptome, maxgap=300000):
                             "gene_type": f"{itype}_gene",
                             "transcripts": [
                                 t
-                                for gene in immune[itype][offset: i + 1]
+                                for gene in immune[itype][offset : i + 1]
                                 for t in gene.ref_transcripts
                             ],
                         }
@@ -2126,7 +2124,7 @@ def get_mutations(cigartuples, seq, ref_start, qual):
     for cigar in cigartuples:
         if cigar[0] in (1, 2, 8):  # I(ins), D(del) or X (missmatch):
             ref = -cigar[1] if cigar[0] == 1 else cigar[1]
-            alt_base = "" if cigar[0] == 2 else seq[seq_pos: (seq_pos + cigar[1])]
+            alt_base = "" if cigar[0] == 2 else seq[seq_pos : (seq_pos + cigar[1])]
             mutations.append((ref_pos, ref, alt_base, qual[seq_pos] if qual else None))
         if cigar[0] in (0, 2, 3, 7, 8):  # MDN=X -> move forward on reference
             ref_pos += cigar[1]
@@ -2523,7 +2521,7 @@ def write_fasta(
             if len(tr_seqs) > 0:
                 f.write(
                     "\n".join(
-                        f'>{gene.id}_{k} gene={gene.name}'
+                        f">{gene.id}_{k} gene={gene.name}"
                         f'{(" coverage=" + (str(gene.coverage[:, k].sum()) if coverage == "all" else str(gene.coverage[:, k])) if coverage else "")}\n{v}'
                         for k, v in tr_seqs.items()
                     )
