@@ -563,7 +563,7 @@ def altsplice_stats(
     groups=None,
     weight_by_coverage=True,
     min_coverage=2,
-    tr_filter={},
+    tr_filter=None,
 ):
     """Summary statistics for novel alternative splicing.
 
@@ -576,6 +576,9 @@ def altsplice_stats(
     :param tr_filter: Filter dict, that is passed to self.iter_transcripts().
     :return: Table with numbers of novel alternative splicing events, and suggested parameters for isotools.plots.plot_bar().
     """
+    if tr_filter is None:
+        tr_filter = {}
+
     weights = dict()
     # if groups is not None:
     #    gi={r:i for i,r in enumerate(runs)}
@@ -916,8 +919,8 @@ def transcript_length_hist(
     weight_by_coverage=True,
     min_coverage=2,
     use_alignment=True,
-    tr_filter={},
-    ref_filter={},
+    tr_filter=None,
+    ref_filter=None,
 ):
     """Retrieves the transcript length distribution.
 
@@ -935,7 +938,11 @@ def transcript_length_hist(
     :param ref_filter: Filter dict, that is passed to self.iter_ref_transcripts() (relevant only if add_reference=True).
     :return: Table with numbers of transcripts within the length intervals, and suggested parameters for isotools.plots.plot_distr().
     """
-
+    if tr_filter is None:
+        tr_filter = {}
+    if ref_filter is None:
+        ref_filter = {}
+    
     trlen = []
     cov = []
     current = None
@@ -980,7 +987,7 @@ def transcript_length_hist(
 
 
 def transcript_coverage_hist(
-    self, groups=None, bins=50, x_range=(1, 1001), tr_filter={}
+    self, groups=None, bins=50, x_range=(1, 1001), tr_filter=None
 ):
     """Retrieves the transcript coverage distribution.
 
@@ -993,6 +1000,9 @@ def transcript_coverage_hist(
     :param tr_filter: Filter dict, that is passed to self.iter_transcripts().
     :return: Table with numbers of transcripts within the coverage intervals, and suggested parameters for isotools.plots.plot_distr().
     """
+    if tr_filter is None:
+        tr_filter = {}
+    
     # get the transcript coverage in bins for groups
     # return count dataframe and suggested default parameters for plot_distr
     cov = []
@@ -1028,8 +1038,8 @@ def transcripts_per_gene_hist(
     bins=49,
     x_range=(1, 50),
     min_coverage=2,
-    tr_filter={},
-    ref_filter={},
+    tr_filter=None,
+    ref_filter=None,
 ):
     """Retrieves the histogram of number of transcripts per gene.
 
@@ -1044,7 +1054,13 @@ def transcripts_per_gene_hist(
     :param tr_filter: Filter dict, that is passed to self.iter_transcripts().
     :param ref_filter: Filter dict, that is passed to self.iter_ref_transcripts() (relevant only if add_reference=True).
     :return: Table with numbers of genes featuring transcript numbers within the specified intervals,
-        and suggested parameters for isotools.plots.plot_distr()."""
+        and suggested parameters for isotools.plots.plot_distr().
+    """
+    if tr_filter is None:
+        tr_filter = {}
+    if ref_filter is None:
+        ref_filter = {}
+    
     ntr = []
     current = None
     if groups is None:
@@ -1097,8 +1113,8 @@ def exons_per_transcript_hist(
     x_range=(1, 69),
     weight_by_coverage=True,
     min_coverage=2,
-    tr_filter={},
-    ref_filter={},
+    tr_filter=None,
+    ref_filter=None,
 ):
     """Retrieves the histogram of number of exons per transcript.
 
@@ -1114,7 +1130,13 @@ def exons_per_transcript_hist(
     :param tr_filter: Filter dict, that is passed to self.iter_transcripts().
     :param ref_filter: Filter dict, that is passed to self.iter_ref_transcripts() (relevant only if add_reference=True).
     :return: Table with numbers of transcripts featuring exon numbers within the specified intervals,
-        and suggested parameters for isotools.plots.plot_distr()."""
+        and suggested parameters for isotools.plots.plot_distr().
+    """
+    if tr_filter is None:
+        tr_filter = {}
+    if ref_filter is None:
+        ref_filter = {}
+    
     n_exons = []
     cov = []
     current = None
@@ -1164,8 +1186,8 @@ def downstream_a_hist(
     x_range=(0, 1),
     weight_by_coverage=True,
     min_coverage=2,
-    transcript_filter={},
-    ref_filter={},
+    transcript_filter=None,
+    ref_filter=None,
 ):
     """Retrieves the distribution of downstream adenosine content.
 
@@ -1181,6 +1203,11 @@ def downstream_a_hist(
     :param ref_filter: Filter dict, that is passed to self.iter_ref_transcripts() (relevant only if add_reference=True).
     :return: Table with downstream adenosine content distribution, and suggested parameters for isotools.plots.plot_distr().
     """
+    if transcript_filter is None:
+        transcript_filter = {}
+    if ref_filter is None:
+        ref_filter = {}
+    
     acontent = []
     cov = []
     current = None
@@ -1229,7 +1256,7 @@ def direct_repeat_hist(
     x_range=(0, 10),
     weight_by_coverage=True,
     min_coverage=2,
-    tr_filter={},
+    tr_filter=None,
 ):
     """Retrieves the distribution direct repeat length at splice junctions.
 
@@ -1243,6 +1270,9 @@ def direct_repeat_hist(
     :param tr_filter: Filter dict, that is passed to self.iter_transcripts().
     :return: Table with direct repeat length distribution, and suggested parameters for isotools.plots.plot_distr().
     """
+    if tr_filter is None:
+        tr_filter = {}
+
     # find the direct repeat length distribution in FSM transcripts and putative RTTS
     # putative RTTS are identified by introns where both splice sites are novel but within annotated exons
     # TODO: actually no need to check annotation, could simply use filter flags (or the definition from the filter flags, which should be faster)
@@ -1307,7 +1337,7 @@ def direct_repeat_hist(
     return pd.concat([bin_df, counts], axis=1).set_index(["from", "to"]), params
 
 
-def rarefaction(self, groups=None, fractions=20, min_coverage=2, tr_filter={}):
+def rarefaction(self, groups=None, fractions=20, min_coverage=2, tr_filter=None):
     """Rarefaction analysis
 
     Reads are sub-sampled according to the provided fractions, to estimate saturation of the transcriptome.
@@ -1319,7 +1349,10 @@ def rarefaction(self, groups=None, fractions=20, min_coverage=2, tr_filter={}):
     :param tr_filter: Filter dict, that is passed to self.iter_transcripts().
     :return: Tuple with:
         1) Data frame containing the number of discovered transcripts, for each sub-sampling fraction and each sample / sample group.
-        2) Dict with total number of reads for each group."""
+        2) Dict with total number of reads for each group.
+    """
+    if tr_filter is None:
+        tr_filter = {}
 
     cov = []
     current = None

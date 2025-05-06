@@ -84,7 +84,7 @@ def get_error_rate(bam_fn, n=1000):
 
 
 def basequal_hist(
-    bam_fn, qual_bins=10 ** (np.linspace(-7, 0, 30)), len_bins=None, n=10000
+    bam_fn, qual_bins=None, len_bins=None, n=10000
 ):
     """calculates base quality statistics for a bam file:
 
@@ -92,7 +92,10 @@ def basequal_hist(
     :param qual_bins: list of quality thresholds for binning
     :param len_bins: list of read length thresholds for binning
     :param n: number of reads to use for statistics
-    :return: pandas Series or DataFrame with base quality statistics"""
+    :return: pandas Series or DataFrame with base quality statistics
+    """
+    if qual_bins is None:
+        qual_bins = 10 ** (np.linspace(-7, 0, 30))
 
     n_len_bins = 1 if len_bins is None else len(len_bins) + 1
     qual = np.zeros((len(qual_bins) + 1, n_len_bins), dtype=int)
@@ -224,12 +227,24 @@ def kozak_score(sequence, pos, pwm=DEFAULT_KOZAK_PWM):
 
 
 def find_orfs(
-    sequence, start_codons=["ATG"], stop_codons=["TAA", "TAG", "TGA"], ref_cds={}
+    sequence, start_codons=None, stop_codons=None, ref_cds=None
 ):
     """Find all open reading frames on the forward strand of the sequence.
-    Return a 7-tuple with start and stop position, reading frame (0,1 or 2), start and stop codon sequence,
+    :param sequence: DNA sequence to search for ORFs.
+    :param start_codons: List of start codons (default: ["ATG"]).
+    :param stop_codons: List of stop codons (default: ["TAA", "TAG", "TGA"]).
+    :param ref_cds: Dictionary of reference CDS (default: {}).
+
+    :return: List of ORFs as tuples, containing a 7-tuple with start and stop position, reading frame (0,1 or 2), start and stop codon sequence,
     number of upstream start codons, and the ids of the reference transcripts with matching CDS initialization.
     """
+    if start_codons is None:
+        start_codons = ["ATG"]
+    if stop_codons is None:
+        stop_codons = ["TAA", "TAG", "TGA"]
+    if ref_cds is None:
+        ref_cds = {}
+
     orf = []
     starts = [[], [], []]
     stops = [[], [], []]
@@ -302,11 +317,14 @@ def get_intersects(tr1, tr2):
         return sjintersect, intersect
 
 
-def _filter_function(expression, context_filters={}):
+def _filter_function(expression, context_filters=None):
     """
     converts a string e.g. "all(x[0]/x[1]>3)" into a function
     if context_filters is provided, filter tags will be recursively replaced with their expression
     """
+    if context_filters is None:
+        context_filters = {}
+    
     assert isinstance(expression, str), "expression should be a string"
     # extract argument names
     used_filters = []
@@ -520,8 +538,16 @@ def precompute_events_dict(
     return events_dict
 
 
-def get_quantiles(pos: list[tuple[int, int]], percentile=[0.5]):
-    """provided a list of (positions,coverage) pairs, return the median position"""
+def get_quantiles(pos: list[tuple[int, int]], percentile=None):
+    """Provided a list of (positions, coverage) pairs, return the median position.
+
+    :param pos: List of tuples containing positions and coverage values.
+    :param percentile: List of percentiles to calculate (default: [0.5]).
+    :return: List of positions corresponding to the given percentiles.
+    """
+    if percentile is None:
+        percentile = [0.5]
+    
     # percentile should be sorted, and between 0 and 1
     total = sum(cov for _, cov in pos)
     n = 0
@@ -633,9 +659,10 @@ def genomic_position(tr_pos, exons, reverse_strand):
     assert all(
         p <= tr_len for p in tr_pos
     ), f"Requested positions {tr_pos} for transcript of length {tr_len}."
-    if reverse_strand:
-        tr_pos = [tr_len - p for p in tr_pos]
-    tr_pos = sorted(set(tr_pos))
+    
+    transformed_tr_pos = [tr_len - p for p in tr_pos] if reverse_strand else tr_pos
+    tr_pos = sorted(set(transformed_tr_pos))
+    
     intron_len = 0
     mapped_pos = []
     i = 0
@@ -653,8 +680,11 @@ def genomic_position(tr_pos, exons, reverse_strand):
     else:
         for i in range(i, len(tr_pos)):
             mapped_pos.append(offset + intron_len + tr_pos[i])
-    if reverse_strand:  # get them back to the original
-        tr_pos = [tr_len - p for p in tr_pos]
+    
+    # reverse the positions back to the original if reverse_strand is True
+    if reverse_strand:
+        tr_pos = [tr_len - p for p in transformed_tr_pos]
+    
     return {p: mp for p, mp in zip(tr_pos, mapped_pos)}
 
 

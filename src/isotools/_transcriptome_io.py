@@ -1742,7 +1742,7 @@ def _read_gtf_file(file_name, chromosomes, infer_genes=False, progress_bar=True)
 
 
 def _get_tabix_end(tbx_fh):
-    for line in tbx_fh.fetch(tbx_fh.contigs[-1]):
+    for _line in tbx_fh.fetch(tbx_fh.contigs[-1]):
         pass
     end = tbx_fh.tell()
     tbx_fh.seek(0)

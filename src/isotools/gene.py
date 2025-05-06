@@ -587,14 +587,14 @@ class Gene(Interval):
     def add_orfs(
         self,
         genome_fh,
-        tr_filter={},
+        tr_filter=None,
         reference=False,
         minlen=300,
         min_kozak=None,
         max_5utr_len=0,
         prefer_annotated_init=True,
-        start_codons=["ATG"],
-        stop_codons=["TAA", "TAG", "TGA"],
+        start_codons=None,
+        stop_codons=None,
         kozak_matrix=DEFAULT_KOZAK_PWM,
         get_fickett=True,
         coding_hexamers=None,
@@ -603,12 +603,13 @@ class Gene(Interval):
         """Predict the CDS for each transcript.
 
         For each transcript, one ORF is selected as the coding sequence. Depending on the parameters, this is either the first ORF
-        (sequence starting with start_condon, and ending with in frame stop codon), or the longest ORF,
+        (sequence starting with start_condon, and ending with in-frame stop codon), or the longest ORF,
         starting with a codon that is annotated as CDS initiation site in a reference transcript.
-        The genomic and transcript positions of these codons, and the length of the ORF, as well as  the number of upstream start codons
+        The genomic and transcript positions of these codons, and the length of the ORF, as well as the number of upstream start codons
         is added to the transcript properties transcript["ORF"]. Additionally, the Fickett score, and the hexamer score are computed. For the
         latter, hexamer frequencies in coding and noncoding transcripts are needed. See CPAT python module for prebuilt tables and
         instructions.
+        
         :param tr_filter: dict with filtering parameters passed to iter_transcripts or iter_ref_transcripts
         :param min_len: Minimum length of the ORF, Does not apply to annotated initiation sites.
         :param min_kozak: Minimal score for translation initiation site. Does not apply to annotated initiation sites.
@@ -621,6 +622,13 @@ class Gene(Interval):
         :param coding_hexamers: The hexamer frequencies for coding sequences.
         :param noncoding_hexamers: The hexamer frequencies for non-coding sequences (background).
         """
+        if tr_filter is None:
+            tr_filter = {}
+        if start_codons is None:
+            start_codons = ["ATG"]
+        if stop_codons is None:
+            stop_codons = ["TAA", "TAG", "TGA"]
+
         if tr_filter:
             if reference:
                 tr_dict = {

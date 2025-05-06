@@ -35,7 +35,7 @@ def add_domains_to_table(
     source="annotation",
     categories=None,
     id_col="gene_id",
-    modes=["trA-trB", "trB-trA"],
+    modes=None,
     naming="id",
     overlap_only=False,
     insert_after=None,
@@ -59,6 +59,8 @@ def add_domains_to_table(
         By default, domain columns returned as separate DataFrame.
     :param **filter_kwargs: additional keywords are passed to Gene.filter_transcripts, to restrict the transcripts to be considered.
     """
+    if modes is None:
+        modes = ["trA-trB", "trB-trA"]
 
     # set operators:
     # set union: |

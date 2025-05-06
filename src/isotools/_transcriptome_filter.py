@@ -77,8 +77,8 @@ def add_orf_prediction(
     self: "Transcriptome",
     genome_fn,
     progress_bar=True,
-    filter_transcripts={},
-    filter_ref_transcripts={},
+    filter_transcripts=None,
+    filter_ref_transcripts=None,
     min_len=300,
     max_5utr_len=500,
     min_kozak=None,
@@ -102,7 +102,11 @@ def add_orf_prediction(
     :param fickett_score: If set to True, the Fickett TESTCODE score is computed for the ORF.
     :param hexamer_file: Filename of the hexamer table, for the ORF hexamer scores. If set not None, the hexamer score is not computed.
     """
-
+    if filter_transcripts is None:
+        filter_transcripts = {}
+    if filter_ref_transcripts is None:
+        filter_ref_transcripts = {}
+    
     if hexamer_file is None:
         coding = None
         noncoding = None
@@ -338,11 +342,12 @@ def iter_genes(
             tag: _filter_function(tag, self.filter["gene"])[0] for tag in used_tags
         }
 
-        try:  # test the filter expression with dummy tags
+        # test the filter expression with dummy tags
+        try:
             query_fun(**{tag: True for tag in used_tags})
-        except BaseException:
-            logger.error("Error in query string: \n{query}")
-            raise
+        except Exception as e:
+            logger.error("Error in query string: \n%s", query)
+            raise e
 
     if region is None:
         if gois is None:

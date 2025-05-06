@@ -132,7 +132,7 @@ def plot_diff_results(
             ax=ax,
         )
         ax.legend([], [], frameon=False)
-        for i, group_name in enumerate(group_names):
+        for _, group_name in enumerate(group_names):
             max_i = int(params_alt[group_name][0] * (len(x) - 1))
             ax2 = ax.twinx()  # instantiate a second axes that shares the same x-axis
             if params_alt[group_name][1] > 0:
@@ -425,7 +425,7 @@ def plot_saturation(
     isoseq=None,
     ax=None,
     cov_th=2,
-    expr_th=[0.5, 1, 2, 5, 10],
+    expr_th=None,
     x_range=(1e4, 1e7, 1e4),
     legend=True,
     label=True,
@@ -445,7 +445,11 @@ def plot_saturation(
     :param x_range: Specify the range of the x axis (e.g. the sequencing depth)
     :param legend: If set True, a legend is added to the plot.
     :param label: If set True, the sample names and sequencing depth from the isoseq parameter is printed in the plot.
-    :param \\**axparams: Additional keyword parameters are passed to ax.set()."""
+    :param \\**axparams: Additional keyword parameters are passed to ax.set().
+    """
+    if expr_th is None:
+        expr_th = [0.5, 1, 2, 5, 10]
+
     if ax is None:
         _, ax = plt.subplots()
     k = np.arange(*x_range)

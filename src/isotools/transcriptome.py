@@ -51,10 +51,17 @@ class Transcriptome:
     def __init__(
         self,
         data: Optional[dict[str, IntervalTree[Gene]]] = None,
-        infos=dict(),
-        chimeric=dict(),
-        filter=dict(),
+        infos=None,
+        chimeric=None,
+        filter=None,
     ):
+        if infos is None:
+            infos = {}
+        if chimeric is None:
+            chimeric = {}
+        if filter is None:
+            filter = {}
+
         """Constructor method"""
         if data is not None:
             self.data = data

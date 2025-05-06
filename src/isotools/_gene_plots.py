@@ -958,7 +958,7 @@ def genome_pos_to_gene_segments(pos, genome_map, strict=True):
             continue
         break
     else:
-        for i in range(i, len(pos)):
+        for _i in range(i, len(pos)):
             mapped_pos.append(None if strict else offset)
     if reverse_strand:
         trlen = sum(seg[1] - seg[0] for seg in genome_map)

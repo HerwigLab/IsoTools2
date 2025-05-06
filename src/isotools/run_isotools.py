@@ -466,7 +466,7 @@ def plot_altsplice_examples(
 
     for cat, best_list in examples.items():
         logger.debug(cat + str(best_list))
-        for i, (score, gene_name, gene_id, transcript_id, cov, total_cov) in enumerate(
+        for i, (_score, gene_name, gene_id, transcript_id, cov, total_cov) in enumerate(
             best_list
         ):
             gene = isoseq[gene_id]
@@ -575,7 +575,7 @@ def plot_diffsplice(
         fig.tight_layout()
         fig.savefig(f'{file_prefix}_{"_".join(groups)}_{gene.name}_sashimi.{plot_type}')
         # zoom
-        for i, row in de_tab.loc[de_tab.gene == gene.name].iterrows():
+        for _, row in de_tab.loc[de_tab.gene == gene.name].iterrows():
             if row.start > gene.start and row.end < gene.end:
                 for a in axs:
                     a.set_xlim((row.start - 1000, row.end + 1000))
