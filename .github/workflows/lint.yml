@@ -1,16 +1,16 @@
 # This is a GitHub Actions workflow file for linting Python code using Tox and Flake8.
-# It runs on every push and pull request to any branch.
-# If Black reformats any files, commit and push the changes back to the repository automatically.
-
 name: Lint
 
 on:
   push:
     branches:
-      - '**'
+      - '**'  # run on every push to any branch
   pull_request:
     branches:
-      - '**'
+      - master  # run on pull requests targeting the master branch
+
+permissions:
+  contents: write
 
 jobs:
   lint:
@@ -36,6 +36,5 @@ jobs:
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
           git add .
-          git commit -m "Apply Black formatting" || echo "No changes to commit"
+          git commit -m "Apply linting fixes" || echo "No changes to commit"
           git push
-        if: success() # Only commit if the previous steps succeeded
