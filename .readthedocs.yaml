@@ -1,8 +1,13 @@
-# File: .readthedocs.yaml
+# Read the Docs configuration file for Sphinx projects
+# See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
 
 version: 2
 
 # Build from the docs/ directory with Sphinx
+build:
+  os: ubuntu-22.04
+
+# Build documentation in the "docs/" directory with Sphinx
 sphinx:
   configuration: docs/conf.py
 
