@@ -1757,13 +1757,16 @@ def _read_gff_file(file_name, chromosomes, progress_bar=True):
     cds_start = dict()
     cds_stop = dict()
     # takes quite some time... add a progress bar?
-    with tqdm(
-        total=path.getsize(file_name),
-        unit_scale=True,
-        unit="B",
-        unit_divisor=1024,
-        disable=not progress_bar,
-    ) as pbar, TabixFile(file_name) as gff:
+    with (
+        tqdm(
+            total=path.getsize(file_name),
+            unit_scale=True,
+            unit="B",
+            unit_divisor=1024,
+            disable=not progress_bar,
+        ) as pbar,
+        TabixFile(file_name) as gff,
+    ):
         chrom_ids = get_gff_chrom_dict(gff, chromosomes)
         for line in gff.fetch():
             file_pos = (
