@@ -14,4 +14,4 @@ importlib-metadata
 pyhmmer
 requests
 CPAT
-ternary
+python-ternary
