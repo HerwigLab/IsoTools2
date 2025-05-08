@@ -1,6 +1,52 @@
 [build-system]
-requires = ["setuptools>=46.4", "wheel"]
+requires = ["setuptools >= 77.0.3", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "isotools"
+authors = [
+  { name="Matthias Lienhard", email="lienhard@molgen.mpg.de" },
+  { name="Yalan Bi", email="yalan_bi@molgen.mpg.de" },
+]
+description = "Framework for the analysis of long read transcriptome sequencing data"
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
+]
+license = "MIT"
+license-files = ["LICEN[CS]E*"]
+dynamic = ["version"]
+dependencies = [
+    "numpy",
+    "pandas",
+    "tqdm",
+    "intervaltree",
+    "matplotlib",
+    "seaborn",
+    "biopython",
+    "pysam",
+    "umap-learn",
+    "scikit-learn",
+    "scipy",
+    "statsmodels",
+    "pyhmmer",
+    "requests",
+    "CPAT",
+    "python-ternary",
+]
+
+[project.urls]
+Homepage = "https://github.com/HerwigLab/IsoTools2"
+Documentation = "https://isotools.readthedocs.io/"
+Repository = "https://github.com/HerwigLab/IsoTools2.git"
+Issues = "https://github.com/HerwigLab/IsoTools2/issues"
+Changelog = "https://github.com/HerwigLab/IsoTools2/blob/master/CHANGELOG.md"
+
+[tool.setuptools.dynamic]
+version = {file = ["VERSION.txt"]}
 
 [tool.pytest.ini_options]
 addopts = "--cov=isotools"

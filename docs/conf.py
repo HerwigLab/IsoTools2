@@ -25,7 +25,7 @@ sys.path.insert(0, os.path.abspath("../src"))
 
 project = "isotools"
 copyright = "2021, Matthias Lienhard"
-author = "Matthias Lienhard"
+author = "Matthias Lienhard, Yalan Bi"
 
 # The short X.Y version
 version = ".".join(__version__.split(".")[:2])
