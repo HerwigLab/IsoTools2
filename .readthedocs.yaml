@@ -19,4 +19,3 @@ python:
 sphinx:
   configuration: docs/conf.py
   fail_on_warning: False
-  fail_on_error: True
