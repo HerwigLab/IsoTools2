@@ -10,8 +10,7 @@ umap-learn
 scikit-learn
 scipy
 statsmodels
-importlib-metadata
 pyhmmer
 requests
 CPAT
-ternary
+python-ternary

@@ -56,9 +56,9 @@
 * new feature: filter_transcripts function for genes
 * changed SUBSTANTIAL filter to 1% of the genes total (was 5%)
 * coordination test:
-    * changed argument and column naming, to make it consistent with other test results
-    * added conditional delta PSI effect size measure
-    * order of events is now according to gene strand: A upstream of B
+  * changed argument and column naming, to make it consistent with other test results
+  * added conditional delta PSI effect size measure
+  * order of events is now according to gene strand: A upstream of B
 
 ## [0.3.0]
 
@@ -75,7 +75,6 @@
 
 * added function to import samples from csv/gtf to import transcriptome reconstruction / quantification from other tools.
 * dropped requirement for gtf files to be tabix indexed.
-
 
 ## [0.2.10]
 
@@ -106,12 +105,10 @@
 * added colors parameter to plotting functions
 * various fixes of command line script run_isotools.py
 
-
 ## [0.2.7]
 
 * added command line script run_isotools.py
 * added test data for unit tests
-
 
 ## [0.2.6]
 
@@ -119,9 +116,9 @@
 * Fixed bug in novel splicing subcategory assignment
 * new feature: rarefaction analysis
 * Changed filtering: expressions get evaluated during iteration
-    * Predefined filters are added automatically
-    * Add / remove filters one by one
-    * added optional progress bar to iter_genes/transcripts
+  * Predefined filters are added automatically
+  * Add / remove filters one by one
+  * added optional progress bar to iter_genes/transcripts
 
 ## [0.2.5]
 
@@ -174,7 +171,7 @@
 * fix: property of transcripts included {sample_name:0}
 * save the TSS and PAS positions
 * New: use_satag parameter for add_sample_from_bam
-* Change: use median TSS/PAS (of all reads with same splice pattern) as transcript start/end (e.g. exons[0][0]/exons[-1][1])
+* Change: use median TSS/PAS (of all reads with same splice pattern) as transcript start/end (e.g. exons\[0\]\[0\]/exons\[-1\]\[1\])
 * Fix: Novel exon skipping annotation now finds all exonic regions that are skipped.
 * change: Default filter of FRAGMENTS now only tags reads that do not use a reference TSS or PAS
 
@@ -206,8 +203,8 @@
 
 * Change: refactored SpliceGraph to SegmentGraph to better comply with common terms in literature
 * New: added a basic implementation of an actual SpliceGraph (as commonly defined in literature)
-    * based on sorted dict
-    * not used so far, but maybe useful in importing the long read bam files since it can be extended easily
+  * based on sorted dict
+  * not used so far, but maybe useful in importing the long read bam files since it can be extended easily
 * New: added decorators "experimental" and "deprecated" to mark unsafe functions
 * Change: in differential splicing changed the alternative fraction, to match the common PSI (% spliced in) definition
 * Change: narrowed definition of mutually exclusive exons: the alternatives now need to to feature exactly one ME exon and rejoin at node C

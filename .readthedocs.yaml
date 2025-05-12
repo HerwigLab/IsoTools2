@@ -1,13 +1,21 @@
-# File: .readthedocs.yaml
+# Read the Docs configuration file for Sphinx projects
+# See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
 
 version: 2
 
 # Build from the docs/ directory with Sphinx
-sphinx:
-  configuration: docs/conf.py
+build:
+  os: "ubuntu-24.04"
+  tools:
+    nodejs: "20"
+    python: "3.12"
 
 # Explicitly set the version of Python
 python:
-  version: 3.12
   install:
     - requirements: docs/requirements.txt
+
+# Build documentation in the "docs/" directory with Sphinx
+sphinx:
+  configuration: docs/conf.py
+  fail_on_warning: False
