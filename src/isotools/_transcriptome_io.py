@@ -164,6 +164,7 @@ def add_sample_from_csv(
     :param sample_properties: Additional properties of the samples, that get added to the sample table, and can be used to group or stratify the samples.
         Can be provided either as a dict with sample names as keys, and the respective properties dicts as the values,
         or as a data frame with a column "name" or with the sample names in the index, and the properties in the additional columns.
+        Use "group" for grouping information.
     :param add_chromosomes: If True, genes from chromosomes which are not in the Transcriptome yet are added.
     :param infer_genes: If True, gene structure is inferred from the transcripts. Useful for gtf files without gene information.
     :param reconstruct_genes: If True, transcript gene assignment from gtf is ignored, and transcripts are grouped to genes from scratch.
@@ -1910,16 +1911,21 @@ def import_ref_transcripts(
                         if cds_start[transcript_id] < cds_stop[transcript_id]
                         else (cds_stop[transcript_id], cds_start[transcript_id])
                     )
-                gene.data["reference"].setdefault("transcripts", []).append(
-                    transcript_info
-                )
+                if "transcripts" in gene.data["reference"] and type(gene.data["reference"]["transcripts"]) is not list:
+                    logger.warning(f'ignore gene {gene_id} as no proper annotation found')
+                    logger.debug(f'its "transcripts" field is: {gene.data["reference"]["transcripts"]}')
+                else:
+                    gene.data["reference"].setdefault("transcripts", []).append(
+                        transcript_info
+                    )
             if short_exon_th is not None:
-                short_exons = {
-                    exon
-                    for transcript in gene.data["reference"]["transcripts"]
-                    for exon in transcript["exons"]
-                    if exon[1] - exon[0] <= short_exon_th
-                }
+                short_exons = set()
+                for transcript in gene.data["reference"]["transcripts"]:
+                    if isinstance(transcript, dict):
+                        for exon in transcript["exons"]:
+                            exon_length = exon[1] - exon[0]
+                            if exon_length <= short_exon_th:
+                                short_exons.add(exon)
                 if short_exons:
                     gene.data["reference"]["short_exons"] = short_exons
     return genes
