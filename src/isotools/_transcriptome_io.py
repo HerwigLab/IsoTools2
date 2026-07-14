@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from os import path
 from intervaltree import IntervalTree, Interval
+from Bio.Seq import reverse_complement
 from collections.abc import Iterable
 from collections import Counter, defaultdict
 from pysam import TabixFile, AlignmentFile, FastaFile
@@ -1970,42 +1971,29 @@ def export_end_sequences(
     """
     with FastaFile(reference) as ref:
         known_positions = defaultdict(set)
+
+        def _write(fh, query):
+            for gene, transcript_id, transcript in self.iter_transcripts(query=query, **kwargs):
+                is_plus = transcript["strand"] == "+"
+                center = (
+                    transcript["exons"][0][0]
+                    if start == is_plus
+                    else transcript["exons"][-1][1] - 1   # exclusive end -> last included base
+                )
+                window_here = window if is_plus else window[::-1]
+                pos = (gene.chrom, center - window_here[0], center + window_here[1] + 1)
+                if pos in known_positions[gene.chrom]:
+                    continue
+                seq = ref.fetch(*pos)
+                if not is_plus:
+                    seq = reverse_complement(seq)
+                fh.write(f">{gene.id}\t{transcript_id}\t{pos[0]}:{pos[1]}-{pos[2]}\n{seq}\n")
+                known_positions[gene.chrom].add(pos)
+
         with open(f"{output}_positive.fa", "w") as positive:
-            for gene, transcript_id, transcript in self.iter_transcripts(
-                query=positive_query, **kwargs
-            ):
-                center = (
-                    transcript["exons"][0][0]
-                    if start == (transcript["strand"] == "+")
-                    else transcript["exons"][-1][1]
-                )
-                window_here = window if transcript["strand"] == "+" else window[::-1]
-                pos = (gene.chrom, center - window_here[0], center + window_here[1] + 1)
-                if pos in known_positions[gene.chrom]:
-                    continue
-                seq = ref.fetch(*pos)
-                positive.write(
-                    f">{gene.id}\t{transcript_id}\t{pos[0]}:{pos[1]}-{pos[2]}\n{seq}\n"
-                )
-                known_positions[gene.chrom].add(pos)
+            _write(positive, positive_query)
         with open(f"{output}_negative.fa", "w") as negative:
-            for gene, transcript_id, transcript in self.iter_transcripts(
-                query=negative_query, **kwargs
-            ):
-                center = (
-                    transcript["exons"][0][0]
-                    if start == (transcript["strand"] == "+")
-                    else transcript["exons"][-1][1]
-                )
-                window_here = window if transcript["strand"] == "+" else window[::-1]
-                pos = (gene.chrom, center - window_here[0], center + window_here[1] + 1)
-                if pos in known_positions[gene.chrom]:
-                    continue
-                seq = ref.fetch(*pos)
-                negative.write(
-                    f">{gene.id}\t{transcript_id}\t{pos[0]}:{pos[1]}-{pos[2]}\n{seq}\n"
-                )
-                known_positions[gene.chrom].add(pos)
+            _write(negative, negative_query)
 
 
 def collapse_immune_genes(self: Transcriptome, maxgap=300000):

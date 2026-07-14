@@ -6,6 +6,10 @@
 * planned new feature: during import of long reads, (optionally) correct for short exon alignment issues.
 * separate new read import and classification of isoforms.
 
+## [2.0.1]
+
+* fixed `export_end_sequences`: corrected TSS/PAS coordinate calculation for minus-strand transcripts (off-by-one from half-open exon end coordinate) and added missing reverse-complement of fetched sequence
+
 ## [2.0.0]
 
 * support the analysis of Oxford Nanopore data
