@@ -167,7 +167,7 @@ def add_sample_from_csv(
         Use "group" for grouping information.
     :param add_chromosomes: If True, genes from chromosomes which are not in the Transcriptome yet are added.
     :param infer_genes: If True, gene structure is inferred from the transcripts. Useful for gtf files without gene information.
-    :param reconstruct_genes: If True, transcript gene assignment from gtf is ignored, and transcripts are grouped to genes from scratch.
+    :param reconstruct_genes: If True, transcript to gene assignment from gtf is ignored, and transcripts are grouped to genes from scratch.
     :param min_exonic_ref_coverage: Minimal fraction of exonic overlap to assign to reference transcript if no splice junctions match.
         Also applies to mono-exonic transcripts
     :param progress_bar: Show the progress.
@@ -1596,8 +1596,15 @@ def _read_gtf_file(file_name, chromosomes, infer_genes=False, progress_bar=True)
     #       pbar.update(file_pos-pbar.n)
     openfun = gziplib.open if file_name.endswith(".gz") else open
 
+    # two-pass approach: count lines first for a proper growing bar, then iterate
+    if progress_bar:
+        with openfun(file_name, "rt") as gtf:
+            total_lines = sum(1 for _ in gtf)
+    else:
+        total_lines = None
+
     with openfun(file_name, "rt") as gtf:
-        for line in gtf:
+        for line in tqdm(gtf, total=total_lines, disable=not progress_bar, unit="lines"):
             if line[0] == "#":  # ignore header lines
                 continue
             ls = line.split(sep="\t")
@@ -1751,37 +1758,35 @@ def _get_tabix_end(tbx_fh):
     return end
 
 
-def _read_gff_file(file_name, chromosomes, progress_bar=True):
+def _read_gff_file(file_name, chromosomes, infer_genes=False, progress_bar=True):
     exons = dict()  # transcript id -> exons
     transcripts = dict()  # gene_id -> transcripts
     skipped = defaultdict(set)
     genes = dict()
     cds_start = dict()
     cds_stop = dict()
-    # takes quite some time... add a progress bar?
-    with (
-        tqdm(
-            total=path.getsize(file_name),
-            unit_scale=True,
-            unit="B",
-            unit_divisor=1024,
-            disable=not progress_bar,
-        ) as pbar,
-        TabixFile(file_name) as gff,
-    ):
-        chrom_ids = get_gff_chrom_dict(gff, chromosomes)
-        for line in gff.fetch():
-            file_pos = (
-                gff.tell() >> 16
-            )  # the lower 16 bit are the position within the zipped block
-            if pbar.n < file_pos:
-                pbar.update(file_pos - pbar.n)
-            ls = line.split(sep="\t")
-            if ls[0] not in chrom_ids:
+
+    openfun = gziplib.open if file_name.endswith(".gz") else open
+
+    if progress_bar:
+        with openfun(file_name, "rt") as gff:
+            total_lines = sum(1 for _ in gff)
+    else:
+        total_lines = None
+
+    with openfun(file_name, "rt") as gff:
+        for line in tqdm(gff, total=total_lines, disable=not progress_bar, unit="lines"):
+            if line[0] == "#":  # ignore header lines
                 continue
-            chrom = chrom_ids[ls[0]]
+
+            ls = line.split(sep="\t")
+            if len(ls) < 9:
+                logger.warning("GFF line has fewer than 9 fields, skipping:\n%s", line)
+                continue
+
+            chrom = ls[0]
             if chromosomes is not None and chrom not in chromosomes:
-                logger.debug("skipping line %s from chr %s", line, chrom)
+                logger.debug("skipping line from chr " + chrom)
                 continue
             try:
                 info = dict(
@@ -1792,12 +1797,57 @@ def _read_gff_file(file_name, chromosomes, progress_bar=True):
                     "GFF format error in infos (should be ; separated key=value pairs). Skipping line:\n%s",
                     line,
                 )
+                continue
+
             start, end = [int(i) for i in ls[3:5]]
             start -= 1  # to make 0 based
+
             if ls[2] == "exon":
                 try:
                     gff_id = info["Parent"]
                     exons.setdefault(gff_id, list()).append((start, end))
+                    if infer_genes and "Parent" in info:
+                        parent_id = info["Parent"]
+                        if parent_id not in genes.get(chrom, {}):  # new gene
+                            info["strand"] = ls[6]
+                            info["chr"] = chrom
+                            _set_alias(info, {"ID": ["gene_id"]})
+                            _set_alias(
+                                info, {"name": ["Name", "gene_name"]}, required=False
+                            )
+                            ref_info = {
+                                k: v
+                                for k, v in info.items()
+                                if k not in Gene.required_infos + ["name"]
+                            }
+                            gene_info = {
+                                k: info[k]
+                                for k in Gene.required_infos + ["name"]
+                                if k in info
+                            }
+                            gene_info["properties"] = ref_info
+                            genes.setdefault(chrom, {})[parent_id] = (
+                                gene_info,
+                                start,
+                                end,
+                            )  # start/end not fixed yet
+                        else:
+                            known_info = genes[chrom][parent_id]
+                            genes[chrom][parent_id] = (
+                                known_info[0],
+                                min(known_info[1], start),
+                                max(known_info[2], end),
+                            )
+                            if "ID" in info and info["ID"] not in transcripts.setdefault(
+                                parent_id, {}
+                            ):
+                                # new transcript
+                                tr_info = {
+                                    k: v
+                                    for k, v in info.items()
+                                    if k.startswith("transcript_")
+                                }
+                                transcripts[parent_id][info["ID"]] = tr_info
                 except KeyError:  # should not happen if GFF is OK
                     logger.warning(
                         "GFF format error: no parent found for exon. Skipping line:\n%s",
@@ -1829,6 +1879,7 @@ def _read_gff_file(file_name, chromosomes, progress_bar=True):
                 # skip other feature types. Only keep a record of feature type without further information in skipped
                 # this usually happens to reference annotation, eg: UTR, CDS etc.
                 skipped[ls[2]]
+
     return exons, transcripts, genes, cds_start, cds_stop, skipped
 
 
