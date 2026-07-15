@@ -1949,36 +1949,42 @@ def import_sqanti_classification(self: Transcriptome, path: str, progress_bar=Tr
 def export_end_sequences(
     self: Transcriptome,
     reference: str,
-    output: str,
-    positive_query,
-    negative_query,
+    filename: str,
+    query=None,
     start=True,
     window=(25, 25),
     **kwargs,
 ):
     """
-    Generates two fasta files containing the reference sequences in a window around the TSS (or PAS)
-    of all transcripts that meet and not meet the criterium respectively.
+    Generates a fasta file containing reference sequences in a window around the TSS (or PAS)
+    of all transcripts matching the given query.
 
-    :param reference: Path to the reference genome in fasta format or a FastaFile handle
-    :param output: Prefix for the two output files. Files will be generated as positive.fa and negative.fa
-    :param positive_query: Filter string that is passed to iter_transcripts() to select the positive output
-    :param negative_query: Same as positive_query, but for the negative output
-    :param start: If True, the TSS is used as reference point, otherwise the PAS
-    :param window: Tuple of bases specifying the window size around the TSS (PAS) as number of bases (upstream, downstream).
-        Total window size is upstream + downstream + 1
-    :param kwargs: Additional arguments are passed to both calls of iter_transcripts()
+    :param reference: Path to the reference genome in fasta format or a FastaFile handle.
+    :param filename: Filename or full path for the output fasta file. If not specified, a
+        default name is generated from the query and reference point (TSS/PAS).
+    :param query: Transcript tag passed to iter_transcripts() to select transcripts to export.
+        If None, all transcripts are exported.
+    :param start: If True, the TSS is used as reference point, otherwise the PAS.
+    :param window: Tuple of bases specifying the window size around the TSS (PAS) as number
+        of bases (upstream, downstream). Total window size is upstream + downstream + 1.
+    :param kwargs: Additional arguments are passed to iter_transcripts().
     """
+    if not query:
+        logger.info("No query specified, exporting all transcripts in the transcriptome")
+
+    if not filename:
+        filename = f"{'tss' if start else 'pas'}_sequences{'_' + str(query) if query else ''}.fa"
+
     with FastaFile(reference) as ref:
         known_positions = defaultdict(set)
 
-        def _write(fh, query):
+        with open(filename, "w") as fh:
             for gene, transcript_id, transcript in self.iter_transcripts(query=query, **kwargs):
                 is_plus = transcript["strand"] == "+"
                 center = (
                     transcript["exons"][0][0]
                     if start == is_plus
-                    else transcript["exons"][-1][1] - 1   # exclusive end -> last included base
+                    else transcript["exons"][-1][1] - 1  # exclusive end -> last included base
                 )
                 window_here = window if is_plus else window[::-1]
                 pos = (gene.chrom, center - window_here[0], center + window_here[1] + 1)
@@ -1989,11 +1995,6 @@ def export_end_sequences(
                     seq = reverse_complement(seq)
                 fh.write(f">{gene.id}\t{transcript_id}\t{pos[0]}:{pos[1]}-{pos[2]}\n{seq}\n")
                 known_positions[gene.chrom].add(pos)
-
-        with open(f"{output}_positive.fa", "w") as positive:
-            _write(positive, positive_query)
-        with open(f"{output}_negative.fa", "w") as negative:
-            _write(negative, negative_query)
 
 
 def collapse_immune_genes(self: Transcriptome, maxgap=300000):
