@@ -118,7 +118,7 @@ def plot_diff_results(
                 "vs".join(str(p[0]) for p in params_alt.values()),
             )
             continue
-        # get the paramters for the beta distiribution
+        # get the parameters for the beta distribution
         ax = axs[len(plotted)]
         # ax.boxplot([mut,wt], labels=['mut','wt'])
         sns.swarmplot(
