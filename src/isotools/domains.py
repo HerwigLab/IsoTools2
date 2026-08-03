@@ -8,7 +8,6 @@ import requests
 import time
 from ._utils import genomic_position, has_overlap
 
-
 logger = logging.getLogger("isotools")
 
 

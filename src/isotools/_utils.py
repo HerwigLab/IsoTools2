@@ -11,7 +11,6 @@ import math
 from typing import Literal, TypeAlias, TYPE_CHECKING
 from intervaltree import IntervalTree
 
-
 if TYPE_CHECKING:
     from isotools.transcriptome import Transcriptome
     from .splice_graph import SegmentGraph

@@ -1972,7 +1972,9 @@ def export_end_sequences(
     :param kwargs: Additional arguments are passed to iter_transcripts().
     """
     if not query:
-        logger.info("No query specified, exporting all transcripts in the transcriptome")
+        logger.info(
+            "No query specified, exporting all transcripts in the transcriptome"
+        )
 
     if not filename:
         filename = f"{'tss' if start else 'pas'}_sequences{'_' + str(query) if query else ''}.fa"
@@ -1986,12 +1988,15 @@ def export_end_sequences(
         known_positions = defaultdict(set)
 
         with open(filename, "w") as fh:
-            for gene, transcript_id, transcript in self.iter_transcripts(query=query, **kwargs):
+            for gene, transcript_id, transcript in self.iter_transcripts(
+                query=query, **kwargs
+            ):
                 is_plus = transcript["strand"] == "+"
                 center = (
                     transcript["exons"][0][0]
                     if start == is_plus
-                    else transcript["exons"][-1][1] - 1 # exclusive end -> last included base
+                    else transcript["exons"][-1][1]
+                    - 1  # exclusive end -> last included base
                 )
                 window_here = window if is_plus else window[::-1]
                 pos = (gene.chrom, center - window_here[0], center + window_here[1] + 1)
@@ -2006,20 +2011,31 @@ def export_end_sequences(
                     logger.debug(
                         "Skipping transcript %s of gene %s at %s:%d-%d: "
                         "fetched sequence length (%d) does not match expected length (%d)",
-                        transcript_id, gene.id, pos[0], pos[1], pos[2], len(seq), expected_len,
+                        transcript_id,
+                        gene.id,
+                        pos[0],
+                        pos[1],
+                        pos[2],
+                        len(seq),
+                        expected_len,
                     )
                     n_skipped_length += 1
                     continue
 
                 if not is_plus:
                     seq = reverse_complement(seq)
-                fh.write(f">{gene.id}\t{transcript_id}\t{pos[0]}:{pos[1]}-{pos[2]}\n{seq}\n")
+                fh.write(
+                    f">{gene.id}\t{transcript_id}\t{pos[0]}:{pos[1]}-{pos[2]}\n{seq}\n"
+                )
                 known_positions[gene.chrom].add(pos)
                 n_written += 1
 
     logger.info(
         "export_end_sequences: wrote %d sequences to %s (skipped %d out-of-bounds/short, %d duplicate locations)",
-        n_written, filename, n_skipped_length, n_skipped_dup,
+        n_written,
+        filename,
+        n_skipped_length,
+        n_skipped_dup,
     )
 
 

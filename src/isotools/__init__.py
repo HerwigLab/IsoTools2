@@ -39,7 +39,6 @@ from ._transcriptome_filter import (
     ANNOTATION_VOCABULARY,
 )
 
-
 __all__ = [
     "Transcriptome",
     "Gene",
