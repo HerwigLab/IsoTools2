@@ -1953,6 +1953,7 @@ def export_end_sequences(
     query=None,
     start=True,
     window=(25, 25),
+    unique_loc=True,
     **kwargs,
 ):
     """
@@ -1967,6 +1968,7 @@ def export_end_sequences(
     :param start: If True, the TSS is used as reference point, otherwise the PAS.
     :param window: Tuple of bases specifying the window size around the TSS (PAS) as number
         of bases (upstream, downstream). Total window size is upstream + downstream + 1.
+    :param unique_loc: If True, only sequences from unique genomic locations are exported.
     :param kwargs: Additional arguments are passed to iter_transcripts().
     """
     if not query:
@@ -1974,6 +1976,11 @@ def export_end_sequences(
 
     if not filename:
         filename = f"{'tss' if start else 'pas'}_sequences{'_' + str(query) if query else ''}.fa"
+
+    n_written = 0
+    n_skipped_length = 0
+    n_skipped_dup = 0
+    expected_len = sum(window) + 1
 
     with FastaFile(reference) as ref:
         known_positions = defaultdict(set)
@@ -1984,17 +1991,36 @@ def export_end_sequences(
                 center = (
                     transcript["exons"][0][0]
                     if start == is_plus
-                    else transcript["exons"][-1][1] - 1  # exclusive end -> last included base
+                    else transcript["exons"][-1][1] - 1 # exclusive end -> last included base
                 )
                 window_here = window if is_plus else window[::-1]
                 pos = (gene.chrom, center - window_here[0], center + window_here[1] + 1)
-                if pos in known_positions[gene.chrom]:
+
+                if unique_loc and pos in known_positions[gene.chrom]:
+                    n_skipped_dup += 1
                     continue
+
                 seq = ref.fetch(*pos)
+
+                if len(seq) != expected_len:
+                    logger.debug(
+                        "Skipping transcript %s of gene %s at %s:%d-%d: "
+                        "fetched sequence length (%d) does not match expected length (%d)",
+                        transcript_id, gene.id, pos[0], pos[1], pos[2], len(seq), expected_len,
+                    )
+                    n_skipped_length += 1
+                    continue
+
                 if not is_plus:
                     seq = reverse_complement(seq)
                 fh.write(f">{gene.id}\t{transcript_id}\t{pos[0]}:{pos[1]}-{pos[2]}\n{seq}\n")
                 known_positions[gene.chrom].add(pos)
+                n_written += 1
+
+    logger.info(
+        "export_end_sequences: wrote %d sequences to %s (skipped %d out-of-bounds/short, %d duplicate locations)",
+        n_written, filename, n_skipped_length, n_skipped_dup,
+    )
 
 
 def collapse_immune_genes(self: Transcriptome, maxgap=300000):
