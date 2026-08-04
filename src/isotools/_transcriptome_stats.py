@@ -529,7 +529,17 @@ def alternative_splicing_events(
                 )
     return pd.DataFrame(
         bubbles,
-        columns=["gene_id", "gene_name", "chr", "start", "end", "splice_type", "novel", "trA", "trB"]
+        columns=[
+            "gene_id",
+            "gene_name",
+            "chr",
+            "start",
+            "end",
+            "splice_type",
+            "novel",
+            "trA",
+            "trB",
+        ]
         + [
             f"{sample}_{what}" for what in ["in_cov", "total_cov"] for sample in samples
         ],

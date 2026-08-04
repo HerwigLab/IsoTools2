@@ -1604,7 +1604,9 @@ def _read_gtf_file(file_name, chromosomes, infer_genes=False, progress_bar=True)
         total_lines = None
 
     with openfun(file_name, "rt") as gtf:
-        for line in tqdm(gtf, total=total_lines, disable=not progress_bar, unit="lines"):
+        for line in tqdm(
+            gtf, total=total_lines, disable=not progress_bar, unit="lines"
+        ):
             if line[0] == "#":  # ignore header lines
                 continue
             ls = line.split(sep="\t")
@@ -1775,7 +1777,9 @@ def _read_gff_file(file_name, chromosomes, infer_genes=False, progress_bar=True)
         total_lines = None
 
     with openfun(file_name, "rt") as gff:
-        for line in tqdm(gff, total=total_lines, disable=not progress_bar, unit="lines"):
+        for line in tqdm(
+            gff, total=total_lines, disable=not progress_bar, unit="lines"
+        ):
             if line[0] == "#":  # ignore header lines
                 continue
 
@@ -1838,9 +1842,9 @@ def _read_gff_file(file_name, chromosomes, infer_genes=False, progress_bar=True)
                                 min(known_info[1], start),
                                 max(known_info[2], end),
                             )
-                            if "ID" in info and info["ID"] not in transcripts.setdefault(
-                                parent_id, {}
-                            ):
+                            if "ID" in info and info[
+                                "ID"
+                            ] not in transcripts.setdefault(parent_id, {}):
                                 # new transcript
                                 tr_info = {
                                     k: v
@@ -1962,9 +1966,16 @@ def import_ref_transcripts(
                         if cds_start[transcript_id] < cds_stop[transcript_id]
                         else (cds_stop[transcript_id], cds_start[transcript_id])
                     )
-                if "transcripts" in gene.data["reference"] and type(gene.data["reference"]["transcripts"]) is not list:
-                    logger.warning(f'ignore gene {gene_id} as no proper annotation found')
-                    logger.debug(f'its "transcripts" field is: {gene.data["reference"]["transcripts"]}')
+                if (
+                    "transcripts" in gene.data["reference"]
+                    and type(gene.data["reference"]["transcripts"]) is not list
+                ):
+                    logger.warning(
+                        f"ignore gene {gene_id} as no proper annotation found"
+                    )
+                    logger.debug(
+                        f'its "transcripts" field is: {gene.data["reference"]["transcripts"]}'
+                    )
                 else:
                     gene.data["reference"].setdefault("transcripts", []).append(
                         transcript_info
