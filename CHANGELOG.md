@@ -6,6 +6,12 @@
 * planned new feature: during import of long reads, (optionally) correct for short exon alignment issues.
 * separate new read import and classification of isoforms.
 
+## [2.0.3]
+
+* fixed: gff3 import no longer requires a tabix index, allowing annotations on chromosomes exceeding the `.tbi` 512Mbp limit (#28)
+* new: `infer_genes` option (previously gtf-only) now also supported for gff3 import
+* docs: corrected tutorial claiming a tabix index is required for gtf/gff3 import
+
 ## [2.0.2]
 
 * fixed `sashimi_plot`: replaced the removed `np.bool` alias, which crashed the `select_transcripts` option under NumPy >=1.24 (#20)
