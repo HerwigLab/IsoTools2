@@ -1783,7 +1783,10 @@ def _read_gff_file(file_name, chromosomes, infer_genes=False, progress_bar=True)
             if line[0] == "#":  # ignore header lines
                 continue
 
-            ls = line.split(sep="\t")
+            # unlike pysam TabixFile.fetch(), plain file iteration keeps the
+            # trailing newline, which would otherwise leak into the last
+            # (attributes) field
+            ls = line.rstrip("\n").split(sep="\t")
             if len(ls) < 9:
                 logger.warning("GFF line has fewer than 9 fields, skipping:\n%s", line)
                 continue
