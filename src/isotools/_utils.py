@@ -132,7 +132,7 @@ def basequal_hist(bam_fn, qual_bins=None, len_bins=None, n=10000):
     return pd.DataFrame(qual, index=idx, columns=col)
 
 
-def pairwise(iterable):  # e.g. usefull for enumerating introns
+def pairwise(iterable):  # e.g. useful for enumerating introns
     "s -> (s0,s1), (s1,s2), (s2, s3), ..."
     a, b = itertools.tee(iterable)
     next(b, None)

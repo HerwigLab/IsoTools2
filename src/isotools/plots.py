@@ -180,7 +180,7 @@ def plot_embedding(
     :param top_var: Number of alternative splicing events which are used for the embedding.
     :param min_total: Minimum total coverage over all selected samples.
     :param min_alt_fraction: Minimum fraction of reads supporting the alternative (for both groups combined).
-    :param plot_components: The dimentions to plot (E.g. the components of the PCA)
+    :param plot_components: The dimensions to plot (E.g. the components of the PCA)
     :param splice_types: Restrict the analysis on specified splicing event(s).
     :param labels: If True, sample names are printed in the plot next to the corresponding points.
     :param groups: Set a group definition (e.g. by isoseq.Transcirptome.groups()) to color the datapoints.

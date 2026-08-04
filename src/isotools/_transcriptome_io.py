@@ -2238,12 +2238,12 @@ def aligned_part(cigartuples, is_reverse):
                 return (start, end)
             end += cigar[1]
             start = end
-    return (start, end)  # clipping at begining or no clipping
+    return (start, end)  # clipping at beginning or no clipping
 
 
 def get_clipping(cigartuples, pos):
     if cigartuples[0][0] == 4:
-        # clipping at the begining
+        # clipping at the beginning
         return (pos, -cigartuples[0][1])
     elif cigartuples[-1][0] == 4:
         # clipping at the end - get the reference position

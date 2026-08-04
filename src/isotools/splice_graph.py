@@ -415,7 +415,7 @@ class SegmentGraph:
         )
         # j2: index of last segment starting before exon end (i.e. last overlapping segment)
 
-        # check truncation at begining (e.g. low position)
+        # check truncation at beginning (e.g. low position)
         if (
             len(exons) > 1  # no mono exon
             and not any(
