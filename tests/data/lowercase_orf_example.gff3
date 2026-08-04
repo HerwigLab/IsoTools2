@@ -1,0 +1,4 @@
+##gff-version 3
+chr_test	test	gene	1	43	.	+	.	ID=GENE1
+chr_test	test	transcript	1	43	.	+	.	ID=GENE1.1;Parent=GENE1
+chr_test	test	exon	1	43	.	+	.	Parent=GENE1.1
