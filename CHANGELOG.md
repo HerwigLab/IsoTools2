@@ -6,6 +6,10 @@
 * planned new feature: during import of long reads, (optionally) correct for short exon alignment issues.
 * separate new read import and classification of isoforms.
 
+## [2.0.5]
+
+* fixed: gtf/gff3 import no longer reads the file twice for the progress bar (was pre-counting all lines); progress is now tracked by bytes read, roughly halving import time with `progress_bar=True` (#37)
+
 ## [2.0.4]
 
 * fixed: `add_orf_prediction`/`add_orfs` crashed with a `KeyError` on genome FASTA files with soft-masked (lowercase) sequence; also fixes silently missed ORFs in soft-masked regions (#26)
