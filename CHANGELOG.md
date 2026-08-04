@@ -6,6 +6,10 @@
 * planned new feature: during import of long reads, (optionally) correct for short exon alignment issues.
 * separate new read import and classification of isoforms.
 
+## [2.0.4]
+
+* fixed: `add_orf_prediction`/`add_orfs` crashed with a `KeyError` on genome FASTA files with soft-masked (lowercase) sequence; also fixes silently missed ORFs in soft-masked regions (#26)
+
 ## [2.0.3]
 
 * fixed: gff3 import no longer requires a tabix index, allowing annotations on chromosomes exceeding the `.tbi` 512Mbp limit (#28)
