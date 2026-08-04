@@ -368,7 +368,7 @@ def sashimi_plot(
             _ = iter(select_transcripts)  # maybe only one transcript provided?
         except TypeError:
             select_transcripts = (select_transcripts,)
-        mask = np.ones(node_matrix.shape[0], np.bool)
+        mask = np.ones(node_matrix.shape[0], bool)
         mask[select_transcripts] = False
         node_matrix[mask, :] = 0
     boxes = [
