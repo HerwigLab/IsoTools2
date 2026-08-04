@@ -52,11 +52,11 @@ def add_domains_to_table(
         Multible columns can be combined to one mode with set operators "|" for union, "&" for intersection, and "-" for set difference.
         For example "trA-trB" would generate a Series with all domains of transcripts in "trA", but not in "trB".
     :param naming: Define how domains are named, either by "id" or by "name".
-    :parm overlap_only: If set "True", only domains overlapping the region from column "start" to "end" are considered.
+    :param overlap_only: If set "True", only domains overlapping the region from column "start" to "end" are considered.
         If set "False", all domains of the transcripts are considered.
     :param insert_after: Define column after which the domains are inserted into the table, either by column name or index.
         By default, domain columns returned as separate DataFrame.
-    :param **filter_kwargs: additional keywords are passed to Gene.filter_transcripts, to restrict the transcripts to be considered.
+    :param \\*\\*filter_kwargs: additional keywords are passed to Gene.filter_transcripts, to restrict the transcripts to be considered.
     """
     if modes is None:
         modes = ["trA-trB", "trB-trA"]
