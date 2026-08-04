@@ -6,6 +6,10 @@
 * planned new feature: during import of long reads, (optionally) correct for short exon alignment issues.
 * separate new read import and classification of isoforms.
 
+## [2.0.7]
+
+* fixed: `add_sample_from_csv` crashed with a confusing `AttributeError` when one transcript_id/gene_id from the coverage csv wasn't found in the transcripts file; the warning now also suggests `infer_genes=True` when the file has no gene annotations (#25)
+
 ## [2.0.6]
 
 * fixed: `has_overlap`/`get_overlap` gave wrong results for reverse-strand features, where genomic coordinates are sometimes passed as `(end, start)` instead of `(start, end)`; this caused `add_domains_to_table` to silently miss overlapping domains on the reverse strand (#23)
