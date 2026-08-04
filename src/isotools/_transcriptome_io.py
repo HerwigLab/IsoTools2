@@ -275,18 +275,31 @@ def add_sample_from_csv(
 
     if "gene_id" not in cov_tab:
         gene_id_dict = {tid: gid for gid, tids in transcripts.items() for tid in tids}
-        try:
-            cov_tab["gene_id"] = [gene_id_dict[tid] for tid in cov_tab.transcript_id]
-        except KeyError as e:
+        cov_tab["gene_id"] = [gene_id_dict.get(tid) for tid in cov_tab.transcript_id]
+        missing = cov_tab["gene_id"].isna()
+        if missing.any():
             logger.warning(
-                "transcript_id %s from csv file not found in gtf." % e.args[0]
+                "%d transcript_id(s) from %s not found in %s, e.g. %s",
+                missing.sum(),
+                coverage_csv_file,
+                transcripts_file,
+                cov_tab.loc[missing, "transcript_id"].iloc[0],
             )
+            cov_tab = cov_tab[~missing]
     if "chr" not in cov_tab:
         chrom_dict = {gid: chrom for chrom, gids in gene_infos.items() for gid in gids}
-        try:
-            cov_tab["chr"] = [chrom_dict[gid] for gid in cov_tab.gene_id]
-        except KeyError as e:
-            logger.warning("gene_id %s from csv file not found in gtf.", e.args[0])
+        cov_tab["chr"] = [chrom_dict.get(gid) for gid in cov_tab.gene_id]
+        missing = cov_tab["chr"].isna()
+        if missing.any():
+            logger.warning(
+                "%d gene_id(s) from %s not found in %s, e.g. %s -- if the file has no "
+                "gene annotations (only transcript/exon lines), try infer_genes=True",
+                missing.sum(),
+                coverage_csv_file,
+                transcripts_file,
+                cov_tab.loc[missing, "gene_id"].iloc[0],
+            )
+            cov_tab = cov_tab[~missing]
 
     used_transcripts = set()
     for _, row in cov_tab.iterrows():

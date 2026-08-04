@@ -1,0 +1,4 @@
+chr2_part	PacBio	transcript	3250396	3250740	.	+	.	transcript_id "PB.7.1"; gene_id "PB.7"
+chr2_part	PacBio	exon	3250396	3250740	.	+	.	transcript_id "PB.7.1"; gene_id "PB.7";
+chr2_part	PacBio	transcript	3905348	3905724	.	-	.	transcript_id "PB.1.1"; gene_id "PB.1"
+chr2_part	PacBio	exon	3905348	3905724	.	-	.	transcript_id "PB.1.1"; gene_id "PB.1";

@@ -16,6 +16,25 @@ def test_import_gff():
     assert True
 
 
+def test_add_sample_from_csv_missing_gene_info():
+    # regression test for #25: a coverage csv row referencing a transcript_id
+    # not found in the transcripts file previously broke gene_id/chr column
+    # construction for *every* row, not just the unmatched one (an all-or-
+    # nothing list comprehension inside a try/except). PB.999.1 below is not
+    # in the gtf; the two real transcripts must still import successfully.
+    isoseq = Transcriptome.from_reference("tests/data/example.gff.gz")
+    id_map = isoseq.add_sample_from_csv(
+        "tests/data/no_gene_lines_example_coverage.csv",
+        transcripts_file="tests/data/no_gene_lines_example.gtf",
+        transcript_id_col="transcript_id",
+        reconstruct_genes=False,
+        infer_genes=True,
+        sep=",",
+    )
+    assert isoseq.n_transcripts == 2, "the two known transcripts should still import"
+    assert set(id_map) == {"PB.7", "PB.1"}
+
+
 def test_read_gff_progress_bar_plain_and_gzip():
     # regression test for #37: the progress bar's byte-position tracking
     # must work for both plain and gzip files. It previously crashed for
