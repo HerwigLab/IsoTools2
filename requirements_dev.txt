@@ -1,5 +1,7 @@
-flake8==3.9.2
-tox==3.24.3
-pytest==6.2.5
-pytest-cov==2.12.1
-pytest-dependency==0.5.1
+flake8==7.3.0
+flake8-bugbear==25.11.29
+black==26.5.1
+tox==4.58.0
+pytest==9.1.1
+pytest-cov==7.1.0
+pytest-dependency==0.6.1
