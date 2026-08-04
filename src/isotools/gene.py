@@ -671,6 +671,10 @@ class Gene(Interval):
         for transcript_id, tr_seq in self.get_sequence(
             genome_fh, transcript_ids=tr_dict.keys(), reference=reference
         ).items():
+            # genome FASTA files commonly soft-mask repeats with lowercase
+            # bases; start/stop codon matching, kozak_score's PWM lookup, and
+            # the CPAT fickett/hexamer scoring all expect uppercase
+            tr_seq = tr_seq.upper()
             orfs = find_orfs(
                 tr_seq,
                 start_codons,
