@@ -20,22 +20,22 @@ license = "MIT"
 license-files = ["LICEN[CS]E*"]
 dynamic = ["version"]
 dependencies = [
-    "numpy>=2.4.6",
-    "pandas>=3.0.5",
-    "tqdm>=4.70.0",
-    "intervaltree>=3.2.1",
-    "matplotlib>=3.11.1",
-    "seaborn>=0.13.2",
-    "biopython>=1.87",
-    "pysam>=0.24.0",
-    "umap-learn>=0.5.12",
-    "scikit-learn>=1.9.0",
-    "scipy>=1.18.0",
-    "statsmodels>=0.14.6",
-    "pyhmmer>=0.12.1",
-    "requests>=2.34.2",
-    "CPAT>=3.0.5",
-    "python-ternary>=1.0.8",
+    "numpy",
+    "pandas",
+    "tqdm",
+    "intervaltree",
+    "matplotlib",
+    "seaborn",
+    "biopython",
+    "pysam",
+    "umap-learn",
+    "scikit-learn",
+    "scipy",
+    "statsmodels",
+    "pyhmmer",
+    "requests",
+    "CPAT",
+    "python-ternary",
 ]
 
 [project.scripts]
