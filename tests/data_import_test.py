@@ -16,6 +16,17 @@ def test_import_gff():
     assert True
 
 
+def test_read_gff_progress_bar_plain_and_gzip():
+    # regression test for #37: the progress bar's byte-position tracking
+    # must work for both plain and gzip files. It previously crashed for
+    # plain files only ("OSError: telling position disabled by next() call"),
+    # since the gzip branch bypasses the disabled TextIOWrapper.tell().
+    Transcriptome.from_reference(
+        "tests/data/infer_genes_example.gff3", progress_bar=True, infer_genes=True
+    )
+    Transcriptome.from_reference("tests/data/example.gff.gz", progress_bar=True)
+
+
 def test_import_gff_infer_genes():
     # infer_genes_example.gff3 has no "gene" lines, only "transcript"/"exon",
     # with two transcripts (GENE1.1, GENE1.2) sharing Parent=GENE1 -- the

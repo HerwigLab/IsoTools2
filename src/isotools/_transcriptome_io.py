@@ -1580,6 +1580,14 @@ def _find_matching_gene(
     return None, None, list(range((len(exons) - 1) * 2))
 
 
+def _byte_pos(fh, is_gzip):
+    "current position in the underlying (possibly compressed) file, for progress reporting"
+    # fh.tell() is disabled once a TextIOWrapper is iterated with a for-loop
+    # (its internal readahead makes the position unreliable), so read the
+    # position from the underlying binary buffer instead
+    return fh.buffer.fileobj.tell() if is_gzip else fh.buffer.tell()
+
+
 def _read_gtf_file(file_name, chromosomes, infer_genes=False, progress_bar=True):
     exons = dict()  # transcript id -> exons
     transcripts = dict()  # gene_id -> transcripts
@@ -1589,24 +1597,23 @@ def _read_gtf_file(file_name, chromosomes, infer_genes=False, progress_bar=True)
     )  # 4 tuple: info_dict, gene_start, gene_end, fixed_flag==True if start/end are fixed
     cds_start = dict()
     cds_stop = dict()
-    # with tqdm(total=path.getsize(file_name), unit_scale=True, unit='B', unit_divisor=1024, disable=not progress_bar) as pbar, TabixFile(file_name) as gtf:
-    # for line in gtf.fetch():
-    #    file_pos = gtf.tell() >> 16
-    #    if pbar.n < file_pos:
-    #       pbar.update(file_pos-pbar.n)
-    openfun = gziplib.open if file_name.endswith(".gz") else open
+    is_gz = file_name.endswith(".gz")
+    openfun = gziplib.open if is_gz else open
 
-    # two-pass approach: count lines first for a proper growing bar, then iterate
-    if progress_bar:
-        with openfun(file_name, "rt") as gtf:
-            total_lines = sum(1 for _ in gtf)
-    else:
-        total_lines = None
-
-    with openfun(file_name, "rt") as gtf:
-        for line in tqdm(
-            gtf, total=total_lines, disable=not progress_bar, unit="lines"
-        ):
+    with (
+        openfun(file_name, "rt") as gtf,
+        tqdm(
+            total=path.getsize(file_name),
+            unit_scale=True,
+            unit="B",
+            unit_divisor=1024,
+            disable=not progress_bar,
+        ) as pbar,
+    ):
+        for line in gtf:
+            pos = _byte_pos(gtf, is_gz)
+            if pos > pbar.n:
+                pbar.update(pos - pbar.n)
             if line[0] == "#":  # ignore header lines
                 continue
             ls = line.split(sep="\t")
@@ -1760,18 +1767,23 @@ def _read_gff_file(file_name, chromosomes, infer_genes=False, progress_bar=True)
     cds_start = dict()
     cds_stop = dict()
 
-    openfun = gziplib.open if file_name.endswith(".gz") else open
+    is_gz = file_name.endswith(".gz")
+    openfun = gziplib.open if is_gz else open
 
-    if progress_bar:
-        with openfun(file_name, "rt") as gff:
-            total_lines = sum(1 for _ in gff)
-    else:
-        total_lines = None
-
-    with openfun(file_name, "rt") as gff:
-        for line in tqdm(
-            gff, total=total_lines, disable=not progress_bar, unit="lines"
-        ):
+    with (
+        openfun(file_name, "rt") as gff,
+        tqdm(
+            total=path.getsize(file_name),
+            unit_scale=True,
+            unit="B",
+            unit_divisor=1024,
+            disable=not progress_bar,
+        ) as pbar,
+    ):
+        for line in gff:
+            pos = _byte_pos(gff, is_gz)
+            if pos > pbar.n:
+                pbar.update(pos - pbar.n)
             if line[0] == "#":  # ignore header lines
                 continue
 
