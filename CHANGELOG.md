@@ -6,6 +6,10 @@
 * planned new feature: during import of long reads, (optionally) correct for short exon alignment issues.
 * separate new read import and classification of isoforms.
 
+## [2.0.6]
+
+* fixed: `has_overlap`/`get_overlap` gave wrong results for reverse-strand features, where genomic coordinates are sometimes passed as `(end, start)` instead of `(start, end)`; this caused `add_domains_to_table` to silently miss overlapping domains on the reverse strand (#23)
+
 ## [2.0.5]
 
 * fixed: gtf/gff3 import no longer reads the file twice for the progress bar (was pre-counting all lines); progress is now tracked by bytes read, roughly halving import time with `progress_bar=True` (#37)
