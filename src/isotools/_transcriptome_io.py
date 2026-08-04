@@ -8,7 +8,7 @@ from intervaltree import IntervalTree, Interval
 from Bio.Seq import reverse_complement
 from collections.abc import Iterable
 from collections import Counter, defaultdict
-from pysam import TabixFile, AlignmentFile, FastaFile
+from pysam import AlignmentFile, FastaFile
 from tqdm import tqdm
 from contextlib import ExitStack
 from .short_read import Coverage
@@ -1752,14 +1752,6 @@ def _read_gtf_file(file_name, chromosomes, infer_genes=False, progress_bar=True)
     return exons, transcripts, gene_infos, cds_start, cds_stop, skipped
 
 
-def _get_tabix_end(tbx_fh):
-    for _line in tbx_fh.fetch(tbx_fh.contigs[-1]):
-        pass
-    end = tbx_fh.tell()
-    tbx_fh.seek(0)
-    return end
-
-
 def _read_gff_file(file_name, chromosomes, infer_genes=False, progress_bar=True):
     exons = dict()  # transcript id -> exons
     transcripts = dict()  # gene_id -> transcripts
@@ -1813,48 +1805,6 @@ def _read_gff_file(file_name, chromosomes, infer_genes=False, progress_bar=True)
                 try:
                     gff_id = info["Parent"]
                     exons.setdefault(gff_id, list()).append((start, end))
-                    if infer_genes and "Parent" in info:
-                        parent_id = info["Parent"]
-                        if parent_id not in genes.get(chrom, {}):  # new gene
-                            info["strand"] = ls[6]
-                            info["chr"] = chrom
-                            _set_alias(info, {"ID": ["gene_id"]})
-                            _set_alias(
-                                info, {"name": ["Name", "gene_name"]}, required=False
-                            )
-                            ref_info = {
-                                k: v
-                                for k, v in info.items()
-                                if k not in Gene.required_infos + ["name"]
-                            }
-                            gene_info = {
-                                k: info[k]
-                                for k in Gene.required_infos + ["name"]
-                                if k in info
-                            }
-                            gene_info["properties"] = ref_info
-                            genes.setdefault(chrom, {})[parent_id] = (
-                                gene_info,
-                                start,
-                                end,
-                            )  # start/end not fixed yet
-                        else:
-                            known_info = genes[chrom][parent_id]
-                            genes[chrom][parent_id] = (
-                                known_info[0],
-                                min(known_info[1], start),
-                                max(known_info[2], end),
-                            )
-                            if "ID" in info and info[
-                                "ID"
-                            ] not in transcripts.setdefault(parent_id, {}):
-                                # new transcript
-                                tr_info = {
-                                    k: v
-                                    for k, v in info.items()
-                                    if k.startswith("transcript_")
-                                }
-                                transcripts[parent_id][info["ID"]] = tr_info
                 except KeyError:  # should not happen if GFF is OK
                     logger.warning(
                         "GFF format error: no parent found for exon. Skipping line:\n%s",
@@ -1878,6 +1828,33 @@ def _read_gff_file(file_name, chromosomes, infer_genes=False, progress_bar=True)
             ):  # those denote transcripts
                 tr_info = {k: v for k, v in info.items() if k.startswith("transcript_")}
                 transcripts.setdefault(info["Parent"], {})[info["ID"]] = tr_info
+                if infer_genes:
+                    # the transcript's Parent is the gene id -- unlike an exon's
+                    # Parent, which is the transcript id one level down
+                    gene_id = info["Parent"]
+                    if gene_id not in genes.get(chrom, {}):  # gene not seen yet
+                        gene_data = {"ID": gene_id, "chr": chrom, "strand": ls[6]}
+                        if (
+                            "gene_name" in info
+                        ):  # "Name" here is the transcript's own name
+                            gene_data["name"] = info["gene_name"]
+                        gene_data["properties"] = {
+                            k: v
+                            for k, v in info.items()
+                            if not k.startswith("transcript_")
+                        }
+                        genes.setdefault(chrom, {})[gene_id] = (
+                            gene_data,
+                            start,
+                            end,
+                        )  # start/end not fixed yet
+                    else:
+                        known_info = genes[chrom][gene_id]
+                        genes[chrom][gene_id] = (
+                            known_info[0],
+                            min(known_info[1], start),
+                            max(known_info[2], end),
+                        )
             elif ls[2] == "start_codon" and "Parent" in info:
                 cds_start[info["Parent"]] = end if ls[6] == "-" else start
             elif ls[2] == "stop_codon" and "Parent" in info:
@@ -2998,30 +2975,6 @@ def _mats_alt_splice_export(
                 + [pos for exon in exons for pos in exon]
             )  # no need to reverse the order of exon start/end
     return [[offset + count] + l for count, l in enumerate(lines)]
-
-
-def get_gff_chrom_dict(gff: TabixFile, chromosomes):
-    "fetch chromosome ids - in case they use ids in gff for the chromosomes"
-    chrom = {}
-    for c in gff.contigs:
-        # loggin.debug ("---"+c)
-        for line in gff.fetch(
-            c, 1, 2
-        ):  # chromosomes span the entire chromosome, so they can be fetched like that
-            if line[1] == "C":
-                ls = line.split(sep="\t")
-                if ls[2] == "region":
-                    info = dict([pair.split("=") for pair in ls[8].split(";")])
-                    if "chromosome" in info.keys():
-                        if chromosomes is None or info["chromosome"] in chromosomes:
-                            chrom[ls[0]] = info["chromosome"]
-                        break
-
-        else:  # no specific regions entries - no aliases
-            if chromosomes is None or c in chromosomes:
-                chrom[c] = c
-    gff.seek(0)
-    return chrom
 
 
 class IntervalArray:
