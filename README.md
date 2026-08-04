@@ -3,7 +3,7 @@
 [![PyPI](https://img.shields.io/pypi/v/isotools.svg)](https://pypi.org/project/isotools)
 [![PyPIDownloadsTotal](https://pepy.tech/badge/isotools)](https://pepy.tech/project/isotools)
 [![Licence: MIT](https://img.shields.io/badge/license-MIT-blue)](https://github.com/HerwigLab/IsoTools2/blob/master/LICENSE.txt)
-<img align="right" src="IsoToolsLogo.png" alt="IsoTools Logo" width="300"  />
+<img align="right" src="https://raw.githubusercontent.com/HerwigLab/IsoTools2/master/IsoToolsLogo.png" alt="IsoTools Logo" width="300"  />
 
 # IsoTools
 
