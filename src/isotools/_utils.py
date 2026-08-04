@@ -276,14 +276,19 @@ def find_orfs(sequence, start_codons=None, stop_codons=None, ref_cds=None):
 
 def has_overlap(r1, r2):
     "check the overlap of two intervals"
-    # assuming start < end
-    return r1[1] > r2[0] and r2[1] > r1[0]
+    # coordinates on reverse-strand features are sometimes passed as (end, start);
+    # normalize rather than assume start < end. Only the first two elements
+    # are used -- r1/r2 may be e.g. an intervaltree.Interval with extra data
+    r1_lo, r1_hi = min(r1[0], r1[1]), max(r1[0], r1[1])
+    r2_lo, r2_hi = min(r2[0], r2[1]), max(r2[0], r2[1])
+    return r1_hi > r2_lo and r2_hi > r1_lo
 
 
 def get_overlap(r1, r2):
     "check the overlap of two intervals"
-    # assuming start < end
-    return max(0, min(r1[1], r2[1]) - max(r1[0], r2[0]))
+    r1_lo, r1_hi = min(r1[0], r1[1]), max(r1[0], r1[1])
+    r2_lo, r2_hi = min(r2[0], r2[1]), max(r2[0], r2[1])
+    return max(0, min(r1_hi, r2_hi) - max(r1_lo, r2_lo))
 
 
 def get_intersects(tr1, tr2):

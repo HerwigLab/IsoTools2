@@ -27,3 +27,13 @@ Two different test styles exist in this directory:
 
 **When adding a test for a specific bug or feature, use style 1.** Reserve
 the pipeline chain for genuine end-to-end integration concerns.
+
+## File organization
+
+One test file per feature area, named after what it covers -- not
+necessarily 1:1 with a source file, but close (`domain_test.py` for
+`domains.py`, `splice_graph_test.py` for `splice_graph.py`, `orf_test.py`
+for ORF-prediction logic in `gene.py`, `data_import_test.py` for import
+functions in `_transcriptome_io.py`, `utils_test.py` for the general
+primitives in `_utils.py`, etc.). Before creating a new file, check whether
+an existing one already covers that area.
