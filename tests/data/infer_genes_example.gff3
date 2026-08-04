@@ -1,0 +1,7 @@
+##gff-version 3
+chr2_part	test	transcript	100	500	.	+	.	ID=GENE1.1;Parent=GENE1;gene_name=TESTGENE
+chr2_part	test	exon	100	200	.	+	.	Parent=GENE1.1
+chr2_part	test	exon	300	500	.	+	.	Parent=GENE1.1
+chr2_part	test	transcript	150	600	.	+	.	ID=GENE1.2;Parent=GENE1;gene_name=TESTGENE
+chr2_part	test	exon	150	250	.	+	.	Parent=GENE1.2
+chr2_part	test	exon	400	600	.	+	.	Parent=GENE1.2

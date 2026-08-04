@@ -16,6 +16,27 @@ def test_import_gff():
     assert True
 
 
+def test_import_gff_infer_genes():
+    # infer_genes_example.gff3 has no "gene" lines, only "transcript"/"exon",
+    # with two transcripts (GENE1.1, GENE1.2) sharing Parent=GENE1 -- the
+    # gene must be inferred from the transcript lines, not the exon lines
+    # (whose Parent is the transcript id, not the gene id)
+    isoseq = Transcriptome.from_reference(
+        "tests/data/infer_genes_example.gff3", infer_genes=True
+    )
+    assert len(isoseq) == 1, "expected exactly one inferred gene"
+    gene = next(iter(isoseq))
+    assert gene.id == "GENE1"
+    assert gene.name == "TESTGENE"
+    assert gene.chrom == "chr2_part"
+    assert gene.strand == "+"
+    assert gene.n_ref_transcripts == 2, "expected both transcripts on the gene"
+    assert (gene.start, gene.end) == (
+        99,
+        600,
+    ), "gene span should cover both transcripts"
+
+
 @pytest.mark.dependency(depends=["test_import_gff"])
 def test_import_bam():
     isoseq = Transcriptome.from_reference("tests/data/example_ref_isotools.pkl")
