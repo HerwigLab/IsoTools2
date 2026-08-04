@@ -6,6 +6,10 @@
 * planned new feature: during import of long reads, (optionally) correct for short exon alignment issues.
 * separate new read import and classification of isoforms.
 
+## [2.0.2]
+
+* fixed `sashimi_plot`: replaced the removed `np.bool` alias, which crashed the `select_transcripts` option under NumPy >=1.24 (#20)
+
 ## [2.0.1]
 
 * fixed `export_end_sequences`: corrected TSS/PAS coordinate calculation for minus-strand transcripts (off-by-one from half-open exon end coordinate) and added missing reverse-complement of fetched sequence
