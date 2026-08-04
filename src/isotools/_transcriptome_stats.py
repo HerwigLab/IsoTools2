@@ -521,13 +521,15 @@ def alternative_splicing_events(
                     start, end = seg_graph[nX].end, seg_graph[nY].start
                     novel = (start, end) not in known.get(splice_type, set())
                 bubbles.append(
-                    [gene.id, gene.chrom, start, end, splice_type, novel]
+                    [gene.id, gene.name, gene.chrom, start, end, splice_type, novel]
+                    + [sorted(setA, key=lambda x: -gene.coverage[sidx, x].sum())]
+                    + [sorted(setB, key=lambda x: -gene.coverage[sidx, x].sum(0))]
                     + list(junction_cov)
                     + list(total_cov)
                 )
     return pd.DataFrame(
         bubbles,
-        columns=["gene", "chr", "start", "end", "splice_type", "novel"]
+        columns=["gene_id", "gene_name", "chr", "start", "end", "splice_type", "novel", "trA", "trB"]
         + [
             f"{sample}_{what}" for what in ["in_cov", "total_cov"] for sample in samples
         ],

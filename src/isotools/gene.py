@@ -462,6 +462,8 @@ class Gene(Interval):
         ), f"Transcript id {transcript_id} not found in gene {self.id}"
         infos = classification_row[
             [
+                "structural_category",
+                "associated_transcript",
                 "dist_to_CAGE_peak",
                 "within_CAGE_peak",
                 "dist_to_polyA_site",
