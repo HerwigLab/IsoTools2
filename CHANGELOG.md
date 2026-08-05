@@ -6,6 +6,10 @@
 * planned new feature: during import of long reads, (optionally) correct for short exon alignment issues.
 * separate new read import and classification of isoforms.
 
+## [2.1.0]
+
+* **breaking**: renamed `tpm` to `cpm` throughout the API (`transcript_table(cpm=..., cpm_pseudocount=...)`, `Gene.cpm()`, `estimate_cpm_threshold`, `_cpm`/`_sum_cpm` columns). The values were always counts per million (no transcript-length normalization) despite the "tpm" name -- correct for full-length long reads, where read count is already a direct proxy for molecule count, but mislabeled. No deprecated alias; update `tpm=` to `cpm=` in existing code.
+
 ## [2.0.7]
 
 * fixed: `add_sample_from_csv` crashed with a confusing `AttributeError` when one transcript_id/gene_id from the coverage csv wasn't found in the transcripts file; the warning now also suggests `infer_genes=True` when the file has no gene annotations (#25)
