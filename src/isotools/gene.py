@@ -1322,6 +1322,14 @@ class Gene(Interval):
 
         if np.any(cov.sum(0) < min_cov):
             return np.nan, np.nan, []
+        # isoforms of the gene that are only covered in samples outside the two
+        # groups being compared have zero reads in both groups here; such an
+        # all-zero row makes chi2_contingency's expected-frequency table singular
+        # (raises ValueError "expected frequencies has a zero element") -- drop
+        # them first, keeping track of their original indices for the returned ids
+        expressed = cov.sum(1) > 0
+        orig_idx = np.flatnonzero(expressed)
+        cov = cov[expressed]
         # if there are more than 'numIsoforms' isoforms of the gene, all additional least expressed get summarized.
         if cov.shape[0] > n_isoforms:
             idx = np.argpartition(
@@ -1330,11 +1338,12 @@ class Gene(Interval):
             additional = cov[idx[n_isoforms:]].sum(0)
             cov = cov[idx[:n_isoforms]]
             cov[n_isoforms - 1] += additional
+            idx = orig_idx[idx]
             idx[n_isoforms - 1] = -1  # this isoform gets all other - I give it index
         elif cov.shape[0] < 2:
             return np.nan, np.nan, []
         else:
-            idx = np.array(range(cov.shape[0]))
+            idx = orig_idx
         try:
             _, pval, _, _ = chi2_contingency(cov)
         except ValueError:
