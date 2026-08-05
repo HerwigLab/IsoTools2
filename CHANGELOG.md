@@ -6,6 +6,10 @@
 * planned new feature: during import of long reads, (optionally) correct for short exon alignment issues.
 * separate new read import and classification of isoforms.
 
+## [2.1.2]
+
+* fixed: gff3 import silently dropped genes when the file's chromosome/seqid naming didn't match the genome (e.g. RefSeq-style accessions like `NC_000001.11` vs a plain `1`/`chr1` genome FASTA); chromosome name aliasing via `region` feature lines is now resolved again, restoring behavior lost when the tabix-based reader was replaced to fix #28 (#36)
+
 ## [2.1.1]
 
 * fixed: `Transcriptome[...]` gene lookup by name silently returned an arbitrary gene when the name was shared by multiple genes (common for duplicated gene symbols); now warns clearly, separately from the existing gene id ambiguity check (which itself had a bug: it checked against the combined id+name index instead of ids alone) (#27)
