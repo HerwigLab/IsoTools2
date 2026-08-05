@@ -201,14 +201,24 @@ class Transcriptome:
     def make_index(self):
         """Updates the index of gene names and ids (e.g. used by the the [] operator)."""
         idx = dict()
+        seen_ids = set()
+        seen_names = set()
         for gene in self:
-            if gene.id in idx:  # at least id should be unique - maybe raise exception?
+            if gene.id in seen_ids:
                 logger.warning(
-                    "%s seems to be ambigous: %s vs %s",
+                    "gene id %r is ambiguous: shared by multiple genes, e.g. %s vs %s",
                     gene.id,
                     str(idx[gene.id]),
                     str(gene),
                 )
+            seen_ids.add(gene.id)
+            if gene.name in seen_names:
+                logger.warning(
+                    "gene name %r is ambiguous: shared by multiple genes; "
+                    "looking it up by name will return an arbitrary one -- use the gene id instead",
+                    gene.name,
+                )
+            seen_names.add(gene.name)
             idx[gene.name] = gene
             idx[gene.id] = gene
         self._idx = idx
