@@ -434,14 +434,14 @@ def plot_saturation(
     """Plots Negative Binomial model to analyze the saturation of LRTS data.
 
     Saturation (e.g. the probability to observe a transcript of interest in the sample) is dependent on the sequencing depth (number of reads),
-    the concentration of the transcripts of interest in the sample (in TPM),
+    the concentration of the transcripts of interest in the sample (in CPM),
     and the requested coverage of the transcript in the data (minimum number of reads per transcript).
     This function models the relation with a Negative Binomial distribution, to help estimate the required sequencing depth.
 
     :param isoseq: If provided, the sequencing depth of samples from this isotools.Transcriptome object are depicted as vertical lines.
     :param ax: The axis for the plot.
     :param cov_th: The requested coverage, e.g. the minimum number of reads per transcript.
-    :param expr_th: A list of transcript concentrations in TPM for transcripts of interest.
+    :param expr_th: A list of transcript concentrations in CPM for transcripts of interest.
     :param x_range: Specify the range of the x axis (e.g. the sequencing depth)
     :param legend: If set True, a legend is added to the plot.
     :param label: If set True, the sample names and sequencing depth from the isoseq parameter is printed in the plot.
@@ -467,11 +467,11 @@ def plot_saturation(
         if isoseq is not None
         else {}
     )
-    for tpm_th in expr_th:
+    for cpm_th in expr_th:
         chance = nbinom.cdf(
-            k - cov_th, n=cov_th, p=tpm_th * 1e-6
+            k - cov_th, n=cov_th, p=cpm_th * 1e-6
         )  # 0 to k-cov_th failiors
-        ax.plot(k / 1e6, chance, label=f"{tpm_th} TPM")
+        ax.plot(k / 1e6, chance, label=f"{cpm_th} CPM")
     for sample, cov in n_reads.items():
         ax.axvline(cov / 1e6, color="grey", ls="--")
         if label:

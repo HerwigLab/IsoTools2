@@ -191,7 +191,7 @@ def main():
         df = isoseq.transcript_table(
             groups=groups,
             coverage=True,
-            tpm=True,
+            cpm=True,
             query=args.filter_query,
             progress_bar=args.progress_bar,
         )

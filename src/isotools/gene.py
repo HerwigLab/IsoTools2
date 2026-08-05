@@ -856,13 +856,13 @@ class Gene(Interval):
             )  # only the names of the subcategories
         elif key == "coverage":
             return self.coverage[sample_i, transcript_id]
-        elif key == "tpm":
-            return self.tpm(kwargs.get("pseudocount", 1))[sample_i, transcript_id]
+        elif key == "cpm":
+            return self.cpm(kwargs.get("pseudocount", 1))[sample_i, transcript_id]
         elif key == "group_coverage_sum":
             return tuple(self.coverage[si, transcript_id].sum() for si in group_i)
-        elif key == "group_tpm_mean":
+        elif key == "group_cpm_mean":
             return tuple(
-                self.tpm(kwargs.get("pseudocount", 1))[si, transcript_id].mean()
+                self.cpm(kwargs.get("pseudocount", 1))[si, transcript_id].mean()
                 for si in group_i
             )
         elif key in self.transcripts[transcript_id]:
@@ -893,10 +893,10 @@ class Gene(Interval):
         self.data["coverage"] = cov
         self.data["segment_graph"] = None
 
-    def tpm(self, pseudocount=1):
-        """Returns the transcripts per million (TPM).
+    def cpm(self, pseudocount=1):
+        """Returns the counts per million (CPM).
 
-        TPM is returned as a numpy array, with samples in columns and transcript isoforms in the rows.
+        CPM is returned as a numpy array, with samples in columns and transcript isoforms in the rows.
         """
         return (
             (self.coverage + pseudocount)

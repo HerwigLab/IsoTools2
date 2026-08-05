@@ -85,6 +85,29 @@ def test_import_bam():
 
 
 @pytest.mark.dependency(depends=["test_import_bam"])
+def test_cpm():
+    # regression test for the tpm -> cpm rename: values are counts per
+    # million (count / total_reads * 1e6), not length-normalized TPM --
+    # correct for full-length long reads, where read count already is a
+    # direct proxy for molecule count.
+    isoseq = Transcriptome.load("tests/data/example_1_isotools.pkl")
+    tab = isoseq.transcript_table(coverage=True, cpm=True)
+    stab = isoseq.sample_table.set_index("name")
+    for sample in isoseq.samples:
+        cov_col, cpm_col = f"{sample}_coverage", f"{sample}_cpm"
+        assert cov_col in tab.columns and cpm_col in tab.columns
+        total = stab.loc[sample, "nonchimeric_reads"]
+        expected = tab[cov_col] / total * 1e6
+        assert (
+            tab[cpm_col] - expected
+        ).abs().max() < 1e-6, "cpm should be count/total_reads*1e6"
+
+    gene = next(iter(isoseq.iter_genes(query="EXPRESSED")))
+    gene_cpm = gene.cpm()
+    assert gene_cpm.shape == (len(isoseq.samples), gene.n_transcripts)
+
+
+@pytest.mark.dependency(depends=["test_import_bam"])
 def test_fsm():
     isoseq = Transcriptome.load("tests/data/example_1_isotools.pkl")
     count = 0

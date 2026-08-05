@@ -2327,8 +2327,8 @@ def transcript_table(
     samples=None,
     groups=None,
     coverage=False,
-    tpm=False,
-    tpm_pseudocount=0,
+    cpm=False,
+    cpm_pseudocount=0,
     extra_columns=None,
     **filter_args,
 ):
@@ -2339,8 +2339,8 @@ def transcript_table(
     :param samples: provide a list of samples for which coverage / expression information is added.
     :param groups: provide groups as a dict (as from Transcriptome.groups()), for which coverage / expression information is added.
     :param coverage: If set, coverage information is added for specified samples / groups.
-    :param tpm: If set, expression information (in tpm) is added for specified samples / groups.
-    :param tpm_pseudocount: This value is added to the coverage for each transcript, before calculating tpm.
+    :param cpm: If set, expression information (in cpm) is added for specified samples / groups.
+    :param cpm_pseudocount: This value is added to the coverage for each transcript, before calculating cpm.
     :param extra_columns: Specify the additional information added to the table.
         These can be any transcript property as defined by the key in the transcript dict.
     :param filter_args: Parameters (e.g. "region", "query", "min_coverage",...) are passed to Transcriptome.iter_transcripts.
@@ -2353,7 +2353,7 @@ def transcript_table(
             samples = []
     if groups is None:
         groups = {}
-    if coverage is False and tpm is False:
+    if coverage is False and cpm is False:
         samples = []
         groups = {}
     if extra_columns is None:
@@ -2448,13 +2448,13 @@ def transcript_table(
         if samples:
             if coverage:
                 df_list.append(cov[samples].add_suffix("_coverage"))
-            if tpm:
+            if cpm:
                 total = (
                     stab.loc[samples, "nonchimeric_reads"]
-                    + tpm_pseudocount * cov.shape[0]
+                    + cpm_pseudocount * cov.shape[0]
                 )
                 df_list.append(
-                    ((cov[samples] + tpm_pseudocount) / total * 1e6).add_suffix("_tpm")
+                    ((cov[samples] + cpm_pseudocount) / total * 1e6).add_suffix("_cpm")
                 )
         if groups:
             cov_gr = pd.DataFrame(
@@ -2465,14 +2465,14 @@ def transcript_table(
             )
             if coverage:
                 df_list.append(cov_gr.add_suffix("_sum_coverage"))
-            if tpm:
+            if cpm:
                 total = {
                     group_name: stab.loc[sample, "nonchimeric_reads"].sum()
-                    + tpm_pseudocount * cov.shape[0]
+                    + cpm_pseudocount * cov.shape[0]
                     for group_name, sample in groups.items()
                 }
                 df_list.append(
-                    ((cov_gr + tpm_pseudocount) / total * 1e6).add_suffix("_sum_tpm")
+                    ((cov_gr + cpm_pseudocount) / total * 1e6).add_suffix("_sum_cpm")
                 )
         df = pd.concat(df_list, axis=1)
 
