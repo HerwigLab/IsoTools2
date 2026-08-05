@@ -1,5 +1,7 @@
+import numpy as np
 import pytest
 from isotools.transcriptome import Transcriptome
+from isotools.splice_graph import SegmentGraph
 from isotools._utils import (
     _find_splice_sites,
     _get_overlap,
@@ -8,6 +10,26 @@ from isotools._utils import (
 )
 
 # @pytest.mark.dependency(depends=['test_import_bam'])
+
+
+def test_find_splice_bubbles_numpy_coordinates():
+    # regression test for #49: exon coordinates derived from real alignments
+    # are numpy int64, not plain python int. Comparing two numpy.int64 values
+    # gives numpy.bool_, which was previously used directly as a tuple/list
+    # index in find_splice_bubbles -- Python only accepts bool/int there, so
+    # this crashed with "TypeError: tuple indices must be integers or slices,
+    # not numpy.bool" for every real gene with an exon-skipping-type event.
+    exons = [
+        [
+            (np.int64(0), np.int64(10)),
+            (np.int64(20), np.int64(30)),
+            (np.int64(40), np.int64(50)),
+        ],
+        [(np.int64(0), np.int64(10)), (np.int64(40), np.int64(50))],
+    ]
+    sg = SegmentGraph(exons, "+")
+    bubbles = list(sg.find_splice_bubbles(types=["ES"]))
+    assert isinstance(bubbles, list)
 
 
 def test_import_find_splice_site():

@@ -6,6 +6,10 @@
 * planned new feature: during import of long reads, (optionally) correct for short exon alignment issues.
 * separate new read import and classification of isoforms.
 
+## [2.1.4]
+
+* fixed: `alternative_splicing_events`, `altsplice_test`, and `coordination_test` crashed with `TypeError: tuple indices must be integers or slices, not numpy.bool` for real transcriptomes with numpy-typed exon coordinates (#49)
+
 ## [2.1.3]
 
 * fixed: `die_test` crashed with `ValueError: The internally computed table of expected frequencies has a zero element` for genes with isoforms only covered in samples outside the two compared groups (#29)

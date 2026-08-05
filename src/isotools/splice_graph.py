@@ -1183,7 +1183,7 @@ class SegmentGraph:
                 inB_sets.append((set(), set()))
                 unspliced = self[i].end == node_B.start
                 for transcript_id, node_id in node_B.pre.items():
-                    inB_sets[i + 1][unspliced and node_id == i].add(transcript_id)
+                    inB_sets[i + 1][bool(unspliced and node_id == i)].add(transcript_id)
             for i, node_A in enumerate(self):
                 # target nodes for junctions from node A ordered by intron size
                 junctions = sorted(list(set(node_A.suc.values())))
