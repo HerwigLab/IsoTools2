@@ -1782,6 +1782,12 @@ def _read_gff_file(file_name, chromosomes, infer_genes=False, progress_bar=True)
 
     is_gz = file_name.endswith(".gz")
     openfun = gziplib.open if is_gz else open
+    # seqid -> chromosome name, learned from "region" feature lines that
+    # carry a "chromosome" attribute (common in RefSeq-style GFF3, where
+    # seqid is an accession like NC_000001.11 and "chromosome" gives the
+    # plain name, e.g. "1") -- restores the chromosome aliasing that the
+    # old TabixFile-based reader did via get_gff_chrom_dict
+    chrom_alias = {}
 
     with (
         openfun(file_name, "rt") as gff,
@@ -1808,20 +1814,35 @@ def _read_gff_file(file_name, chromosomes, infer_genes=False, progress_bar=True)
                 logger.warning("GFF line has fewer than 9 fields, skipping:\n%s", line)
                 continue
 
-            chrom = ls[0]
+            raw_chrom = ls[0]
+            chrom = chrom_alias.get(raw_chrom, raw_chrom)
+            region_info = None
+            if ls[2] == "region":
+                try:
+                    region_info = dict(
+                        [pair.split("=", 1) for pair in ls[8].rstrip(";").split(";")]
+                    )
+                except ValueError:
+                    region_info = {}
+                if "chromosome" in region_info:
+                    chrom = chrom_alias[raw_chrom] = region_info["chromosome"]
+
             if chromosomes is not None and chrom not in chromosomes:
                 logger.debug("skipping line from chr " + chrom)
                 continue
-            try:
-                info = dict(
-                    [pair.split("=", 1) for pair in ls[8].rstrip(";").split(";")]
-                )  # some gff lines end with ';' in gencode 36
-            except ValueError:
-                logger.warning(
-                    "GFF format error in infos (should be ; separated key=value pairs). Skipping line:\n%s",
-                    line,
-                )
-                continue
+            if region_info is not None:
+                info = region_info
+            else:
+                try:
+                    info = dict(
+                        [pair.split("=", 1) for pair in ls[8].rstrip(";").split(";")]
+                    )  # some gff lines end with ';' in gencode 36
+                except ValueError:
+                    logger.warning(
+                        "GFF format error in infos (should be ; separated key=value pairs). Skipping line:\n%s",
+                        line,
+                    )
+                    continue
 
             start, end = [int(i) for i in ls[3:5]]
             start -= 1  # to make 0 based

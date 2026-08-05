@@ -16,6 +16,22 @@ def test_import_gff():
     assert True
 
 
+def test_import_gff_chromosome_alias():
+    # regression test for #36: RefSeq-style GFF3 files use an accession as
+    # seqid (e.g. NC_000001.11) with the plain chromosome name (e.g. "1")
+    # given via a "chromosome" attribute on a "region" feature line. Genes
+    # were previously silently dropped when filtering against the plain
+    # name, since the tabix-based alias resolution was lost when the
+    # reader was rewritten to fix #28.
+    transcriptome = Transcriptome.from_reference(
+        "tests/data/refseq_style_chrom_alias.gff3", chromosomes={"1"}
+    )
+    assert len(transcriptome) == 1, "gene should be found via chromosome alias"
+    gene = next(iter(transcriptome))
+    assert gene.id == "GENE1"
+    assert gene.chrom == "1", "gene should be indexed under the aliased chromosome name"
+
+
 def test_add_sample_from_csv_missing_gene_info():
     # regression test for #25: a coverage csv row referencing a transcript_id
     # not found in the transcripts file previously broke gene_id/chr column
