@@ -214,7 +214,11 @@ def get_hmmer_sequences(
                 )
                 sequences.append(text_seq.digitize(aa_alphabet))
                 seq_ids.append(seqnames)
-    return sequences, seq_ids
+    sequences_block = pyhmmer.easel.DigitalSequenceBlock(
+        alphabet=sequences[0].alphabet,
+        iterable=sequences,
+    )
+    return sequences_block, seq_ids
 
 
 #  function of isoseq.Transcriptome
