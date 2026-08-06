@@ -4,13 +4,14 @@ IsoTools is a python module for Long Read Transcriptome Sequencing (LRTS) analys
 
 Key features:
 
-* Import of LRTS bam files (aligned full length transcripts).
+* Import of LRTS bam files (aligned full length transcripts) from both PacBio and Oxford Nanopore (ONT) platforms.
 * Import of reference annotation in gff3/gtf format.
 * Computation of quality control metrics.
-* Annotation and classification of novel transcripts using the biologically motivated classification scheme SQANTI.
+* Annotation and classification of novel transcripts using the biologically motivated classification scheme SQANTI, and import of classification reports from the SQANTI3 tool.
 * Evaluation of the coding potential of isoforms.
 * Definition of alternative splicing events based on segment graphs.
-* Detection of differential alternative splicing between samples and groups of samples.
+* Detection of differential alternative splicing and differential isoform expression between samples and groups of samples.
+* Testing whether pairs of alternative splicing events within a gene are coordinated.
 * Gene modelling based on structural and expression variability.
 * Support for proteogenomic approaches at the interface of transcriptomics and proteomics.
 * Various data visualizations.
@@ -38,13 +39,12 @@ For more comprehensive real world examples see the [tutorials](https://isotools.
     import logging
     logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
     transcriptome=Transcriptome.from_reference('reference_file.gff3.gz')
-    isoseq_bam_fn={'sample1':'isoseq_fn_s1.bam', 'sample2':'isoseq_fn_s2.bam'}
+    bam_files={'sample1':'sample1.bam', 'sample2':'sample2.bam'}
     groups={'sample1':'control', 'sample2':'treatment'}
-    for sa,bam in isoseq_bam_fn.items():
+    for sa,bam in bam_files.items():
         transcriptome.add_sample_from_bam(bam, sample_name=sa, group=groups[sa])
     transcriptome.add_qc_metrics('genome.fa')
     transcriptome.make_index()
-    transcriptome.add_filter()
     transcriptome.save('example_isotools.pkl')
 
 Citation and feedback
