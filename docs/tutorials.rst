@@ -12,6 +12,7 @@ Tutorials
     notebooks/04_saturation_analysis.ipynb
     notebooks/05_qc.ipynb
     notebooks/06_filtering.ipynb
+    notebooks/07_gene_model_characteristics.ipynb
     notebooks/08_alternative_splicing.ipynb
     notebooks/09_diff_splice.ipynb
     notebooks/10_domains.ipynb
