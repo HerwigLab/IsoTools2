@@ -64,7 +64,7 @@ transcriptome.save('../tests/data/example_1_isotools.pkl')
 
 ## Citation and feedback
 
-* If you run into any issues, please use the [github issues report feature](https://github.com/HerwigLab/IsoTools2/issues).
+* If you run into any issues, please use the [github issues](https://github.com/HerwigLab/IsoTools2/issues) report feature.
 * For general feedback, please write us an email to [yalan_bi@molgen.mpg.de](mailto:yalan_bi@molgen.mpg.de) and [herwig@molgen.mpg.de](mailto:herwig@molgen.mpg.de).
 * If you use IsoTools in your publication, please cite the following paper in addition to this repository:
   * Lienhard, Matthias et al. “**IsoTools: a flexible workflow for long-read transcriptome sequencing analysis**.” Bioinformatics (Oxford, England) vol. 39,6 (2023): btad364. [doi:10.1093/bioinformatics/btad364](https://doi.org/10.1093/bioinformatics/btad364)
