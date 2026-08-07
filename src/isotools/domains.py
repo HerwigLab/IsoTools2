@@ -177,7 +177,7 @@ def get_hmmer_sequences(
     if query:
         for gene, trids, _ in transcriptome.iter_transcripts(
             genewise=True,
-            query=query,
+            query=query if isinstance(query, str) else None,
             region=region,
             min_coverage=min_coverage,
             max_coverage=max_coverage,
@@ -188,7 +188,7 @@ def get_hmmer_sequences(
     if ref_query:
         for gene, trids, _ in transcriptome.iter_ref_transcripts(
             genewise=True,
-            query=ref_query,
+            query=ref_query if isinstance(ref_query, str) else None,
             region=region,
             gois=gois,
             progress_bar=progress_bar,
@@ -214,7 +214,7 @@ def get_hmmer_sequences(
                 )
                 sequences.append(text_seq.digitize(aa_alphabet))
                 seq_ids.append(seqnames)
-    return sequences, seq_ids
+    return pyhmmer.easel.DigitalSequenceBlock(aa_alphabet, sequences), seq_ids
 
 
 #  function of isoseq.Transcriptome

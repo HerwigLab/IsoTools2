@@ -1,5 +1,48 @@
+import pyhmmer
 from isotools import Transcriptome
-from isotools.domains import add_domains_to_table
+from isotools.domains import add_domains_to_table, get_hmmer_sequences
+
+
+def _example_transcriptome():
+    isoseq = Transcriptome.from_reference("tests/data/example.gff.gz")
+    for sa in ("CTL", "VPA"):
+        isoseq.add_sample_from_bam(
+            f"tests/data/example_1_{sa}.bam", sample_name=sa, group=sa, platform="SequelII"
+        )
+    return isoseq
+
+
+def test_get_hmmer_sequences_returns_digital_sequence_block():
+    # regression test for #53: get_hmmer_sequences returned a plain list, but
+    # pyhmmer's Pipeline.search_hmm has required a DigitalSequenceBlock since
+    # pyhmmer 0.7.0, so any add_hmmer_domains() call crashed with a TypeError.
+    isoseq = _example_transcriptome()
+    alphabet = pyhmmer.easel.Alphabet.amino()
+    sequences, seq_ids = get_hmmer_sequences(
+        isoseq, "tests/data/example.fa", alphabet, query=True, ref_query=True
+    )
+    assert isinstance(sequences, pyhmmer.easel.DigitalSequenceBlock)
+    assert len(sequences) == len(seq_ids)
+
+    pipeline = pyhmmer.plan7.Pipeline(alphabet)
+    builder = pyhmmer.plan7.Builder(alphabet)
+    background = pyhmmer.plan7.Background(alphabet)
+    hmm, _, _ = builder.build(sequences[0], background)
+    hits = pipeline.search_hmm(hmm, sequences)  # would raise TypeError before the fix
+    assert len(hits) >= 1
+
+
+def test_get_hmmer_sequences_query_true_includes_all_transcripts():
+    # regression test for #53: query=True / ref_query=True (the documented
+    # "include all transcripts" value, and the default for both parameters)
+    # was passed straight through as a filter expression, crashing with
+    # AssertionError: expression should be a string.
+    isoseq = _example_transcriptome()
+    alphabet = pyhmmer.easel.Alphabet.amino()
+    sequences, seq_ids = get_hmmer_sequences(
+        isoseq, "tests/data/example.fa", alphabet, query=True, ref_query=True
+    )
+    assert len(sequences) > 0
 
 
 def test_anno_domains():
