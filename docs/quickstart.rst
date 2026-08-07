@@ -16,7 +16,7 @@ Key features:
 * Support for proteogenomic approaches at the interface of transcriptomics and proteomics.
 * Various data visualizations.
 
-.. image:: notebooks/Isotools_overview_slide.png
+.. image:: notebooks/Isotools_overview.png
   :width: 800
   :alt: IsoTools overview
 
