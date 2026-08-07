@@ -10,6 +10,15 @@ import logging
 
 logger = logging.getLogger("isotools")
 
+SQANTI_PALETTE = {
+    0: {"tag": "FSM", "color": "#6BAED6"},
+    1: {"tag": "ISM", "color": "#FC8D59"},
+    2: {"tag": "NIC", "color": "#78C679"},
+    3: {"tag": "NNC", "color": "#EE6A50"},
+    4: {"tag": "NOVEL", "color": "palevioletred"},
+}
+"Colors used for the SQANTI/novelty categories (0=FSM, 1=ISM, 2=NIC, 3=NNC, 4=NOVEL) in gene_track(colorbySqanti=True) and elsewhere."
+
 
 def _label_overlap(pos1, pos2, width, height):
     if abs(pos1[0] - pos2[0]) < width and abs(pos1[1] - pos2[1]) < height:
@@ -577,15 +586,6 @@ def gene_track(
     if reference:
         colorbySqanti = False
 
-    if colorbySqanti:
-        sqanti_palette = {
-            0: {"tag": "FSM", "color": "#6BAED6"},
-            1: {"tag": "ISM", "color": "#FC8D59"},
-            2: {"tag": "NIC", "color": "#78C679"},
-            3: {"tag": "NNC", "color": "#EE6A50"},
-            4: {"tag": "NOVEL", "color": "palevioletred"},
-        }
-
     if ax is None:
         _, ax = plt.subplots(1)
     if x_range is None:
@@ -666,7 +666,7 @@ def gene_track(
 
         # use SQANTI color palette if colorbySqanti is True
         if colorbySqanti and "annotation" in transcript:
-            color = sqanti_palette[transcript["annotation"][0]]["color"]
+            color = SQANTI_PALETTE[transcript["annotation"][0]]["color"]
 
         # line from TSS to PAS at 0.25
         ax.plot((transcript_start, transcript_end), [i + 0.25] * 2, color=color)

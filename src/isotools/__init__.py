@@ -20,6 +20,10 @@ IsoTools: Python package for long read transcriptome sequencing analysis.
 .. data:: SPLICE_CATEGORY
 
     Controlled vocabulary for filtering by novel alternative splicing.
+
+.. data:: SQANTI_PALETTE
+
+    Colors for the SQANTI/novelty categories (FSM, ISM, NIC, NNC, NOVEL), as used by Gene.gene_track(colorbySqanti=True).
 """
 
 try:
@@ -38,6 +42,7 @@ from ._transcriptome_filter import (
     DEFAULT_REF_TRANSCRIPT_FILTER,
     ANNOTATION_VOCABULARY,
 )
+from ._gene_plots import SQANTI_PALETTE
 
 __all__ = [
     "Transcriptome",
@@ -49,4 +54,5 @@ __all__ = [
     "DEFAULT_TRANSCRIPT_FILTER",
     "DEFAULT_REF_TRANSCRIPT_FILTER",
     "ANNOTATION_VOCABULARY",
+    "SQANTI_PALETTE",
 ]
