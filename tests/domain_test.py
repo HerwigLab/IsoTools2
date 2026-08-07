@@ -7,7 +7,10 @@ def _example_transcriptome():
     isoseq = Transcriptome.from_reference("tests/data/example.gff.gz")
     for sa in ("CTL", "VPA"):
         isoseq.add_sample_from_bam(
-            f"tests/data/example_1_{sa}.bam", sample_name=sa, group=sa, platform="SequelII"
+            f"tests/data/example_1_{sa}.bam",
+            sample_name=sa,
+            group=sa,
+            platform="SequelII",
         )
     return isoseq
 
