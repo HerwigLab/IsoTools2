@@ -6,6 +6,10 @@
 * planned new feature: during import of long reads, (optionally) correct for short exon alignment issues.
 * separate new read import and classification of isoforms.
 
+## [2.1.5]
+
+* fixed: `add_hmmer_domains` crashed with `TypeError: Function call with ambiguous argument types` since pyhmmer 0.7.0, since `get_hmmer_sequences` returned a plain list instead of a `DigitalSequenceBlock`; also crashed with `AssertionError: expression should be a string` for the documented `query=True`/`ref_query=True` default ("include all transcripts") (#53)
+
 ## [2.1.4]
 
 * fixed: `alternative_splicing_events`, `altsplice_test`, and `coordination_test` crashed with `TypeError: tuple indices must be integers or slices, not numpy.bool` for real transcriptomes with numpy-typed exon coordinates (#49)
