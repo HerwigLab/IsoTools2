@@ -6,6 +6,12 @@
 * planned new feature: during import of long reads, (optionally) correct for short exon alignment issues.
 * separate new read import and classification of isoforms.
 
+## [2.2.0]
+
+* **breaking**: dropped support for Python 3.10; `requires-python` is now `>=3.11`. CI now tests 3.11-3.14 (added 3.13 and 3.14); verified the full dependency stack (numba, llvmlite, pyhmmer, CPAT, intervaltree) has published wheels for 3.14
+* removed the unused `pyproject.toml` `[project.optional-dependencies] testing` extra -- nothing installed from it (`tox.ini` uses `requirements_dev.txt` directly), and it referenced `mypy`, which isn't run anywhere in CI
+* regenerated the `requirements.txt` lock file under Python 3.14
+
 ## [2.1.6]
 
 * new: `export_end_sequences` now includes strand in the fasta header (`chrom:start-end:strand`)

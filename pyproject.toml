@@ -10,7 +10,7 @@ authors = [
 ]
 description = "Framework for the analysis of long read transcriptome sequencing data"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: MacOS",
@@ -40,15 +40,6 @@ dependencies = [
 
 [project.scripts]
 run_isotools = "isotools.run_isotools:main"
-
-[project.optional-dependencies]
-testing = [
-    "pytest>=6.0",
-    "pytest-cov>=2.0",
-    "mypy>=0.910",
-    "flake8>=3.9",
-    "tox>=3.24",
-]
 
 [project.urls]
 Homepage = "https://github.com/HerwigLab/IsoTools2"
