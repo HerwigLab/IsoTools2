@@ -2093,13 +2093,17 @@ def export_end_sequences(
                     - 1  # exclusive end -> last included base
                 )
                 window_here = window if is_plus else window[::-1]
-                pos = (gene.chrom, center - window_here[0], center + window_here[1] + 1)
+                chr, loc_start, loc_end = (
+                    gene.chrom,
+                    center - window_here[0],
+                    center + window_here[1] + 1,
+                )
 
-                if unique_loc and pos in known_positions[gene.chrom]:
+                if unique_loc and (chr, loc_start, loc_end) in known_positions[chr]:
                     n_skipped_dup += 1
                     continue
 
-                seq = ref.fetch(*pos)
+                seq = ref.fetch(chr, loc_start, loc_end)
 
                 if len(seq) != expected_len:
                     logger.debug(
@@ -2107,9 +2111,9 @@ def export_end_sequences(
                         "fetched sequence length (%d) does not match expected length (%d)",
                         transcript_id,
                         gene.id,
-                        pos[0],
-                        pos[1],
-                        pos[2],
+                        chr,
+                        loc_start,
+                        loc_end,
                         len(seq),
                         expected_len,
                     )
@@ -2119,9 +2123,9 @@ def export_end_sequences(
                 if not is_plus:
                     seq = reverse_complement(seq)
                 fh.write(
-                    f">{gene.id}\t{transcript_id}\t{pos[0]}:{pos[1]}-{pos[2]}\n{seq}\n"
+                    f">{gene.id}\t{transcript_id}\t{chr}:{loc_start}-{loc_end}:{transcript['strand']}\n{seq}\n"
                 )
-                known_positions[gene.chrom].add(pos)
+                known_positions[chr].add((chr, loc_start, loc_end))
                 n_written += 1
 
     logger.info(
@@ -2615,6 +2619,7 @@ def write_fasta(
     reference=False,
     protein=False,
     coverage=None,
+    add_coord=False,
     **filter_args,
 ):
     """
@@ -2625,6 +2630,9 @@ def write_fasta(
     :param protein: Return protein sequences (ORF) instead of transcript sequences.
     :param coverage: By default, the coverage is not added to the header of the fasta. If set, the allowed values are: 'all', or 'sample'.
         'all' - total coverage for all samples; 'sample' - coverage by sample.
+    :param add_coord: If set, include the genomic location "chr:start-end:strand" in the header. For transcript
+        sequences, this is the transcript's genomic span; for protein sequences, this is the coding sequence
+        (annotated CDS, or predicted ORF if not annotated) used for translation.
     :param fn: The filename to write the fasta.
     :param gzip: Compress the output as gzip.
     :param filter_args: Additional filter arguments (e.g. "region", "gois", "query") are passed to iter_transcripts.
@@ -2646,15 +2654,35 @@ def write_fasta(
             tr_seqs = gene.get_sequence(
                 genome_fn, transcript_ids, reference=reference, protein=protein
             )
+            transcripts = gene.ref_transcripts if reference else gene.transcripts
             if len(tr_seqs) > 0:
-                f.write(
-                    "\n".join(
-                        f">{gene.id}_{k} gene={gene.name}"
-                        f'{(" coverage=" + (str(gene.coverage[:, k].sum()) if coverage == "all" else str(gene.coverage[:, k])) if coverage else "")}\n{v}'
-                        for k, v in tr_seqs.items()
+                lines = []
+                for k, v in tr_seqs.items():
+                    transcript = transcripts[k]
+                    coord_info = ""
+                    if add_coord:
+                        if protein:
+                            cds = transcript.get("CDS", transcript.get("ORF"))
+                            if cds:
+                                coord_info = (
+                                    f" {gene.chrom}:{cds[0]}-{cds[1]}:{gene.strand}"
+                                )
+                        else:
+                            coord_info = f" {gene.chrom}:{transcript['exons'][0][0]}-{transcript['exons'][-1][1]}:{gene.strand}"
+                    coverage_info = (
+                        " coverage="
+                        + (
+                            str(gene.coverage[:, k].sum())
+                            if coverage == "all"
+                            else str(gene.coverage[:, k])
+                        )
+                        if coverage
+                        else ""
                     )
-                    + "\n"
-                )
+                    lines.append(
+                        f">{gene.id}_{k}{coord_info} gene={gene.name}{coverage_info}\n{v}"
+                    )
+                f.write("\n".join(lines) + "\n")
 
 
 def export_alternative_splicing(

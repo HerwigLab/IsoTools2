@@ -6,6 +6,11 @@
 * planned new feature: during import of long reads, (optionally) correct for short exon alignment issues.
 * separate new read import and classification of isoforms.
 
+## [2.1.6]
+
+* new: `export_end_sequences` now includes strand in the fasta header (`chrom:start-end:strand`)
+* new: `write_fasta` gained an `add_coord` option to include the genomic location in the fasta header -- the transcript's genomic span for transcript sequences, or the coding sequence (annotated CDS, or predicted ORF) used for translation for protein sequences
+
 ## [2.1.5]
 
 * fixed: `add_hmmer_domains` crashed with `TypeError: Function call with ambiguous argument types` since pyhmmer 0.7.0, since `get_hmmer_sequences` returned a plain list instead of a `DigitalSequenceBlock`; also crashed with `AssertionError: expression should be a string` for the documented `query=True`/`ref_query=True` default ("include all transcripts") (#53)
