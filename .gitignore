@@ -4,6 +4,7 @@
 !.readthedocs.yaml
 !.github
 !.gitattributes
+!.zenodo.json
 # Compiled python modules.
 *.pyc
 *.log

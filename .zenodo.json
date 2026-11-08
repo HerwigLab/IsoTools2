@@ -1,0 +1,15 @@
+
+{
+  "title": "IsoTools2: Framework for the analysis of long read transcriptome sequencing data",
+  "upload_type": "software",
+  "creators": [
+    {"name": "Lienhard, Matthias", "affiliation": "Max Planck Institute for Molecular Genetics", "orcid": "0000-0002-2549-3142"},
+    {"name": "Bi, Yalan", "affiliation": "Max Planck Institute for Molecular Genetics", "orcid": "0000-0002-1992-7397"},
+    {"name": "Herwig, Ralf", "affiliation": "Max Planck Institute for Molecular Genetics", "orcid": "0000-0002-9335-1760"}
+  ],
+  "license": "MIT",
+  "related_identifiers": [
+    {"identifier": "10.1016/j.jmb.2025.169049", "relation": "isSupplementTo", "scheme": "doi"},
+    {"identifier": "10.1093/bioinformatics/btad364", "relation": "isSupplementTo", "scheme": "doi"}
+  ]
+}

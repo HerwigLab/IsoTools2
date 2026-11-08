@@ -6,6 +6,10 @@
 * planned new feature: during import of long reads, (optionally) correct for short exon alignment issues.
 * separate new read import and classification of isoforms.
 
+## [2.2.1]
+
+* added `.zenodo.json` for Zenodo archiving
+
 ## [2.2.0]
 
 * **breaking**: dropped support for Python 3.10; `requires-python` is now `>=3.11`. CI now tests 3.11-3.14 (added 3.13 and 3.14); verified the full dependency stack (numba, llvmlite, pyhmmer, CPAT, intervaltree) has published wheels for 3.14
